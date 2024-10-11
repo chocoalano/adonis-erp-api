@@ -9,7 +9,7 @@ import { UserRepository } from '#services/repositories/user_repository'
 import { createUsersValidator, updateProfileValidator } from '#validators/authenticated/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
-import { unlinkFile } from '../../helpers/file_uploads.js'
+import { unlinkFile } from '../../../helpers/file_uploads.js'
 
 export default class UsersController {
   private process: UserRepository
