@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: API MOBILE APPS ESAS
+  version: '1.0'
+servers:
+  - url: http://localhost:3333
+    description: Local development server
+
+paths:
+  /login:
+    $ref: './Authentication/login.yaml'
+  /user-auth:
+    $ref: './Authentication/auth_detail.yaml'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

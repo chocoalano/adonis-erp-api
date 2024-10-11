@@ -7,6 +7,7 @@ import Permission from '#models/MasterData/Configs/permission'
 import { AuthRepository } from '#services/repositories/auth_repository'
 import { unlinkFile } from '../helpers/file_uploads.js'
 import app from '@adonisjs/core/services/app'
+import { updateProfileValidator } from '#validators/authenticated/user'
 
 export default class AuthController {
   private process: AuthRepository
@@ -94,7 +95,8 @@ export default class AuthController {
       })
       input.users.image = `user-profile/${avatar!.fileName!}`
     }
-    const profile = await this.process.update(userId, input)
+    const payload = await updateProfileValidator(userId).validate(input)
+    const profile = await this.process.update(userId, payload)
     return response.send(profile)
   }
   async updateMobile({ request, auth, response }: HttpContext) {

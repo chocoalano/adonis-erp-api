@@ -1,7 +1,7 @@
 import Attendance from '#models/HR_Administrations/attendance'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
-import { formatChartData, getDateFormat } from '../helpers/for_date.js'
+import { formatChartData, getDateFormat } from '../../helpers/for_date.js'
 import User from '#models/user'
 import emitter from '@adonisjs/core/services/emitter'
 import Cuti from '#models/HR_Administrations/cuti'

@@ -1,0 +1,60 @@
+get:
+      summary: Get authenticated user details
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  account:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 328
+                      name:
+                        type: string
+                        example: "ALAN GENTINA"
+                      nik:
+                        type: string
+                        example: "24020007"
+                      email:
+                        type: string
+                        example: "alangentina95@gmail.com"
+                      phone:
+                        type: string
+                        example: "81212439564"
+                      # Continue with other user fields as provided
+                  role:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Developer", "Administrator", "Member"]
+                  permission:
+                    type: array
+                    items:
+                      type: string
+                    example: [
+                      "user-view",
+                      "user-create",
+                      "attendance-view",
+                      "cuti-view",
+                      "lembur-view",
+                      "koreksi-absen-view"
+                    ]
+        '401':
+          description: Unauthorized - invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Unauthorized"
