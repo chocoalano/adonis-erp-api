@@ -88,7 +88,7 @@ router
     router
       .group(() => {
         router.get('list', [AnnouncementController, 'index'])
-        router.put('detail/:id', [AnnouncementController, 'show'])
+        router.get('detail/:id', [AnnouncementController, 'show'])
       })
       .prefix('announcement')
   })
