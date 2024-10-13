@@ -2,28 +2,22 @@ import User from '#models/user'
 import { BasePolicy } from '@adonisjs/bouncer'
 
 export default class AttendancePolicy extends BasePolicy {
-  async view(user: User) {
-    const hasPermission = await user.hasPermission(user, 'attendance-view')
+  private async hasRequiredPermission(user: User, permission: string): Promise<boolean> {
+    const hasPermission = await user.hasPermission(user, permission)
     const isDeveloper = await user.hasRole(user, 'Developer')
     const isAdmin = await user.hasRole(user, 'Administrator')
     return hasPermission || isDeveloper || isAdmin
+  }
+  async view(user: User) {
+    return this.hasRequiredPermission(user, 'attendance-view')
   }
   async create(user: User) {
-    const hasPermission = await user.hasPermission(user, 'attendance-create')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+    return this.hasRequiredPermission(user, 'attendance-create')
   }
   async update(user: User) {
-    const hasPermission = await user.hasPermission(user, 'attendance-update')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+    return this.hasRequiredPermission(user, 'attendance-update')
   }
   async delete(user: User) {
-    const hasPermission = await user.hasPermission(user, 'attendance-delete')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+    return this.hasRequiredPermission(user, 'attendance-delete')
   }
 }

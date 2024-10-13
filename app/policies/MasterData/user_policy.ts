@@ -1,29 +1,30 @@
 import User from '#models/user'
 import { BasePolicy } from '@adonisjs/bouncer'
+import { AuthorizerResponse } from '@adonisjs/bouncer/types'
 
 export default class UserPolicy extends BasePolicy {
-  async view(user: User) {
-    const hasPermission = await user.hasPermission(user, 'user-view')
+  // Fungsi untuk memeriksa izin dan peran
+  private async hasRequiredPermission(user: User, permission: string): Promise<boolean> {
+    const hasPermission = await user.hasPermission(user, permission)
     const isDeveloper = await user.hasRole(user, 'Developer')
     const isAdmin = await user.hasRole(user, 'Administrator')
     return hasPermission || isDeveloper || isAdmin
   }
-  async create(user: User) {
-    const hasPermission = await user.hasPermission(user, 'user-create')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+
+  // Fungsi-fungsi tindakan yang memanggil fungsi umum
+  async view(user: User): Promise<AuthorizerResponse> {
+    return this.hasRequiredPermission(user, 'user-view')
   }
-  async update(user: User) {
-    const hasPermission = await user.hasPermission(user, 'user-update')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+
+  async create(user: User): Promise<AuthorizerResponse> {
+    return this.hasRequiredPermission(user, 'user-create')
   }
-  async delete(user: User) {
-    const hasPermission = await user.hasPermission(user, 'user-delete')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+
+  async update(user: User): Promise<AuthorizerResponse> {
+    return this.hasRequiredPermission(user, 'user-update')
+  }
+
+  async delete(user: User): Promise<AuthorizerResponse> {
+    return this.hasRequiredPermission(user, 'user-delete')
   }
 }

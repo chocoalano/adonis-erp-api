@@ -2,28 +2,22 @@ import User from '#models/user'
 import { BasePolicy } from '@adonisjs/bouncer'
 
 export default class KoreksiAbsenPolicy extends BasePolicy {
-  async view(user: User) {
-    const hasPermission = await user.hasPermission(user, 'koreksi-absen-view')
+  private async hasRequiredPermission(user: User, permission: string): Promise<boolean> {
+    const hasPermission = await user.hasPermission(user, permission)
     const isDeveloper = await user.hasRole(user, 'Developer')
     const isAdmin = await user.hasRole(user, 'Administrator')
     return hasPermission || isDeveloper || isAdmin
+  }
+  async view(user: User) {
+    return this.hasRequiredPermission(user, 'koreksi-absen-view')
   }
   async create(user: User) {
-    const hasPermission = await user.hasPermission(user, 'koreksi-absen-create')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+    return this.hasRequiredPermission(user, 'koreksi-absen-create')
   }
   async update(user: User) {
-    const hasPermission = await user.hasPermission(user, 'koreksi-absen-update')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+    return this.hasRequiredPermission(user, 'koreksi-absen-update')
   }
   async delete(user: User) {
-    const hasPermission = await user.hasPermission(user, 'koreksi-absen-delete')
-    const isDeveloper = await user.hasRole(user, 'Developer')
-    const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+    return this.hasRequiredPermission(user, 'koreksi-absen-delete')
   }
 }
