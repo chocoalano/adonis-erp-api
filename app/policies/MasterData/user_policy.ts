@@ -1,6 +1,5 @@
 import User from '#models/user'
 import { BasePolicy } from '@adonisjs/bouncer'
-import { AuthorizerResponse } from '@adonisjs/bouncer/types'
 
 export default class UserPolicy extends BasePolicy {
   // Fungsi untuk memeriksa izin dan peran
@@ -12,19 +11,19 @@ export default class UserPolicy extends BasePolicy {
   }
 
   // Fungsi-fungsi tindakan yang memanggil fungsi umum
-  async view(user: User): Promise<AuthorizerResponse> {
+  async view(user: User): Promise<boolean> {
     return this.hasRequiredPermission(user, 'user-view')
   }
 
-  async create(user: User): Promise<AuthorizerResponse> {
+  async create(user: User): Promise<boolean> {
     return this.hasRequiredPermission(user, 'user-create')
   }
 
-  async update(user: User): Promise<AuthorizerResponse> {
+  async update(user: User): Promise<boolean> {
     return this.hasRequiredPermission(user, 'user-update')
   }
 
-  async delete(user: User): Promise<AuthorizerResponse> {
+  async delete(user: User): Promise<boolean> {
     return this.hasRequiredPermission(user, 'user-delete')
   }
 }
