@@ -103,9 +103,7 @@ export default class AuthController {
     const userId = auth.user!.id
     const datatype = request.param('datatype')
     const input = request.all()
-    const avatar = request.file('image', {
-      extnames: ['jpg', 'png', 'jpeg'],
-    })
+    const avatar = request.file('image')
     if (avatar) {
       let path = 'storage/uploads/user-profile'
       const u = await User.findOrFail(userId)
@@ -113,7 +111,7 @@ export default class AuthController {
         await unlinkFile(`storage/uploads/${u.image}`)
       }
       await avatar!.move(app.makePath(path), {
-        name: `${u.nik}.${avatar!.extname}`,
+        name: `${u.nik}.jpg`,
       })
       input.image = `user-profile/${avatar!.fileName!}`
     }
