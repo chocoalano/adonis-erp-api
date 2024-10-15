@@ -12,6 +12,8 @@ export default class Company extends BaseModel {
   @column()
   declare longitude: string
   @column()
+  declare radius: number
+  @column()
   declare fullAddress: string
   @column.dateTime({ autoCreate: true, serializeAs: null })
   declare createdAt: DateTime

@@ -33,6 +33,7 @@ router
       .group(() => {
         router.get('list', [AttendancesController, 'listMobile'])
         router.post('add', [AttendancesController, 'store'])
+        router.get('current-office', [AttendancesController, 'currentOffice'])
         router.get('current-date', [AttendancesController, 'currentDate'])
         router.get('current-shift', [AttendancesController, 'currentShift'])
         router.get('revision/:date', [AttendancesController, 'revisionGet'])

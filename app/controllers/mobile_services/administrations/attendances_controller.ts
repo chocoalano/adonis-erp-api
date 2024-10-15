@@ -1,5 +1,6 @@
 import Attendance from '#models/HR_Administrations/attendance'
 import ScheduleGroupAttendance from '#models/HR_Administrations/schedule_group_attendance'
+import Company from '#models/MasterData/Configs/company'
 import { AttendanceRepository } from '#services/repositories/administrations/attendance_repository'
 import {
   attendanceInValidator,
@@ -35,6 +36,16 @@ export default class AttendancesController {
     return response.ok(q)
   }
 
+  /**
+   * Display a list of resource
+   */
+  async currentOffice({ response }: HttpContext) {
+    const q = await Company.first()
+    if (!q) {
+      return response.notFound(q)
+    }
+    return response.ok(q)
+  }
   /**
    * Display a list of resource
    */
