@@ -117,6 +117,9 @@ export default class AuthController {
     }
     let profile
     switch (datatype) {
+      case 'avatar':
+        profile = await this.process.update(userId, { avatar: input })
+        break
       case 'data-diri':
         profile = await this.process.update(userId, { users: input })
         break

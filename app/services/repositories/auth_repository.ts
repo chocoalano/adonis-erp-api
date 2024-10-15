@@ -17,6 +17,10 @@ import { DateTime } from 'luxon'
 export class AuthRepository implements AuthInterface {
   async update(userId: number, data: any): Promise<User | null> {
     const existing = await User.findOrFail(userId)
+    if (existing && data.avatar) {
+      existing.image = data.avatar.image
+      await existing.save()
+    }
     if (existing && data.users) {
       const input = await profileDataDiriValidator(userId).validate(data.users)
       existing.name = input.name
