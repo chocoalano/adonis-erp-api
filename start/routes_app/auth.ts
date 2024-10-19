@@ -12,6 +12,7 @@ router
       'users-kelengkapan-form',
       '#controllers/masterdata/users_controller.kelengkapan_form'
     )
+    router.delete('user-remove/:datatype/:id', '#controllers/auth_controller.remove_data')
   })
   .use(
     middleware.auth({

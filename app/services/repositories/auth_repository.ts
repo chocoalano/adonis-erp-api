@@ -1,4 +1,6 @@
 import Permission from '#models/MasterData/Configs/permission'
+import UEmergencyContact from '#models/MasterData/UserRelated/u_emergency_contact'
+import UFamily from '#models/MasterData/UserRelated/u_family'
 import User from '#models/user'
 import { AuthInterface } from '#services/interfaces/auth_interfaces'
 import {
@@ -62,31 +64,51 @@ export class AuthRepository implements AuthInterface {
     if (existing && data.kontak_darurat) {
       const input = await profileKontakDaruratValidator.validate(data.kontak_darurat)
       input.forEach(async (el) => {
-        await existing.related('emergencyContact').updateOrCreate(
-          { phone: el.phone },
-          {
-            name: el.name,
-            relationship: el.relationship,
-            phone: el.phone,
-            profesion: el.profession,
+        const getId = await UEmergencyContact.query()
+          .where('user_id', existing.id)
+          .andWhere('name', el.name)
+          .andWhere('relationship', el.relationship)
+          .andWhere('profesion', el.profession)
+          .first();
+
+          let ec;
+          if (getId) {
+            ec = await existing.related('emergencyContact').query().where('id', getId.id).firstOrFail();
+          } else {
+            ec = new UEmergencyContact();
+            ec.userId = existing.id;
           }
-        )
+          ec.name = el.name
+          ec.relationship= el.relationship
+          ec.phone = el.phone
+          ec.profesion = el.profession
+          await ec.save();
       })
     }
     if (existing && data.families) {
       const input = await profileFamiliesValidator.validate(data.families)
-      input.forEach(async (el) => {
-        await existing.related('family').updateOrCreate(
-          { fullname: el.fullname },
-          {
-            fullname: el.fullname,
-            relationship: el.relationship,
-            birthdate: DateTime.fromJSDate(new Date(el.birthdate)),
-            maritalStatus: el.marital_status,
-            job: el.job,
-          }
-        )
-      })
+
+      for (const el of input) {
+        const getId = await UFamily.query()
+          .where('user_id', existing.id)
+          .andWhere('birthdate', el.birthdate)
+          .andWhere('relationship', el.relationship)
+          .first()
+
+        let family
+        if (getId) {
+          family = await existing.related('family').query().where('id', getId.id).firstOrFail()
+        } else {
+          family = new UFamily()
+          family.userId = existing.id
+        }
+        family.fullname = el.fullname
+        family.relationship = el.relationship
+        family.birthdate = DateTime.fromJSDate(new Date(el.birthdate))
+        family.maritalStatus = el.marital_status
+        family.job = el.job
+        await family.save()
+      }
     }
     if (existing && data.formal_education) {
       const input = await profileEducationFormalValidator.validate(data.formal_education)
@@ -195,5 +217,28 @@ export class AuthRepository implements AuthInterface {
     }
 
     return result
+  }
+
+  async remove_data_auth(userId: number, datatype: string, id: number): Promise<User | null> {
+    try {
+      const user = await User.findOrFail(userId);
+
+      switch (datatype) {
+        case 'kontak_keluarga':
+          await user.related('family').query().where('id', id).delete();
+          break;
+        case 'kontak_darurat':
+          await user.related('emergencyContact').query().where('id', id).delete();
+          break;
+
+        default:
+          return user;
+      }
+      return user;
+
+    } catch (error) {
+      console.error(`Error removing data: ${error.message}`);
+      return null;
+    }
   }
 }

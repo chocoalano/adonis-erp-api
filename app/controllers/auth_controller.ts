@@ -151,6 +151,13 @@ export default class AuthController {
     return response.ok(profile)
   }
 
+  async remove_data({ auth, request, response }: HttpContext) {
+    const datatype = request.param('datatype')
+    const id = request.param('id')
+    const remove = await this.process.remove_data_auth(auth.user!.id, datatype, id)
+    return response.ok(remove)
+  }
+
   async logout({ auth, response }: HttpContext) {
     const user = auth.getUserOrFail()
     const token = auth.user?.currentAccessToken.identifier
