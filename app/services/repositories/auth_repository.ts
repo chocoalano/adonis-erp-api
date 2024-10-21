@@ -1,6 +1,8 @@
 import Permission from '#models/MasterData/Configs/permission'
 import UEmergencyContact from '#models/MasterData/UserRelated/u_emergency_contact'
 import UFamily from '#models/MasterData/UserRelated/u_family'
+import UFormalEducation from '#models/MasterData/UserRelated/u_formal_education'
+import UWorkExperience from '#models/MasterData/UserRelated/u_work_experience'
 import User from '#models/user'
 import { AuthInterface } from '#services/interfaces/auth_interfaces'
 import {
@@ -71,18 +73,18 @@ export class AuthRepository implements AuthInterface {
           .andWhere('profesion', el.profession)
           .first();
 
-          let ec;
-          if (getId) {
-            ec = await existing.related('emergencyContact').query().where('id', getId.id).firstOrFail();
-          } else {
-            ec = new UEmergencyContact();
-            ec.userId = existing.id;
-          }
-          ec.name = el.name
-          ec.relationship= el.relationship
-          ec.phone = el.phone
-          ec.profesion = el.profession
-          await ec.save();
+        let ec;
+        if (getId) {
+          ec = await existing.related('emergencyContact').query().where('id', getId.id).firstOrFail();
+        } else {
+          ec = new UEmergencyContact();
+          ec.userId = existing.id;
+        }
+        ec.name = el.name
+        ec.relationship = el.relationship
+        ec.phone = el.phone
+        ec.profesion = el.profession
+        await ec.save();
       })
     }
     if (existing && data.families) {
@@ -113,18 +115,27 @@ export class AuthRepository implements AuthInterface {
     if (existing && data.formal_education) {
       const input = await profileEducationFormalValidator.validate(data.formal_education)
       input.forEach(async (el) => {
-        await existing.related('formalEducation').updateOrCreate(
-          { majors: el.majors },
-          {
-            institution: el.institution,
-            majors: el.majors,
-            score: el.score,
-            start: DateTime.fromJSDate(new Date(el.start)),
-            finish: DateTime.fromJSDate(new Date(el.finish)),
-            description: el.description,
-            certification: el.certification,
-          }
-        )
+        const getId = await UFormalEducation.query()
+          .where('user_id', existing.id)
+          .andWhere('majors', el.majors)
+          .andWhere('institution', el.institution)
+          .first();
+
+        let t;
+        if (getId) {
+          t = await existing.related('formalEducation').query().where('id', getId.id).firstOrFail();
+        } else {
+          t = new UFormalEducation();
+          t.userId = existing.id;
+        }
+        t.institution = el.institution
+        t.majors = el.majors
+        t.score = el.score
+        t.start = DateTime.fromJSDate(new Date(el.start))
+        t.finish = DateTime.fromJSDate(new Date(el.finish))
+        t.description = el.description
+        t.certification = el.certification
+        await t.save();
       })
     }
     if (existing && data.informal_education) {
@@ -149,16 +160,23 @@ export class AuthRepository implements AuthInterface {
     if (existing && data.work_experiences) {
       const input = await profileWorkExperiencesValidator.validate(data.work_experiences)
       input.forEach(async (el) => {
-        await existing.related('workExperience').updateOrCreate(
-          { company: el.company },
-          {
-            company: el.company,
-            position: el.position,
-            from: DateTime.fromJSDate(new Date(el.from)),
-            to: DateTime.fromJSDate(new Date(el.to)),
-            lengthOfService: el.length_of_service,
-          }
-        )
+        const getId = await UWorkExperience.query()
+          .where('user_id', existing.id)
+          .andWhere('company', el.company)
+          .first();
+        let t;
+        if (getId) {
+          t = await existing.related('workExperience').query().where('id', getId.id).firstOrFail();
+        } else {
+          t = new UWorkExperience();
+          t.userId = existing.id;
+        }
+        t.company = el.company
+        t.position = el.position
+        t.from = DateTime.fromJSDate(new Date(el.from))
+        t.to = DateTime.fromJSDate(new Date(el.to))
+        t.lengthOfService = el.length_of_service
+        await t.save();
       })
     }
     if (existing && data.old_password && data.new_password) {
@@ -229,6 +247,15 @@ export class AuthRepository implements AuthInterface {
           break;
         case 'kontak_darurat':
           await user.related('emergencyContact').query().where('id', id).delete();
+          break;
+        case 'pendidikan_normal':
+          await user.related('formalEducation').query().where('id', id).delete();
+          break;
+        case 'pendidikan_informal':
+          await user.related('informalEducation').query().where('id', id).delete();
+          break;
+        case 'pengalaman_kerja':
+          await user.related('workExperience').query().where('id', id).delete();
           break;
 
         default:
