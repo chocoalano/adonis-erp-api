@@ -103,21 +103,19 @@ export default class AuthController {
     const userId = auth.user!.id
     const datatype = request.param('datatype')
     const input = request.all()
-    const avatar = request.file('image')
-    if (avatar) {
-      let path = 'storage/uploads/user-profile'
-      const u = await User.findOrFail(userId)
-      if ((u && u.image !== null) || (u && u.image !== '')) {
-        await unlinkFile(`storage/uploads/${u.image}`)
-      }
-      await avatar!.move(app.makePath(path), {
-        name: `${u.nik}.jpg`,
-      })
-      input.image = `user-profile/${avatar!.fileName!}`
-    }
     let profile
     switch (datatype) {
       case 'avatar':
+        const avatar = request.file('image')
+        let path = 'storage/uploads/user-profile'
+        const u = await User.findOrFail(userId)
+        if ((u && u.image !== null) || (u && u.image !== '')) {
+          await unlinkFile(`storage/uploads/${u.image}`)
+        }
+        await avatar!.move(app.makePath(path), {
+          name: `${u.nik}.jpg`,
+        })
+        input.image = `user-profile/${avatar!.fileName!}`
         profile = await this.process.update(userId, { avatar: input })
         break
       case 'data-diri':
