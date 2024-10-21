@@ -8,6 +8,7 @@ import { AuthRepository } from '#services/repositories/auth_repository'
 import { unlinkFile } from '../helpers/file_uploads.js'
 import app from '@adonisjs/core/services/app'
 import { updateProfileValidator } from '#validators/authenticated/user'
+import { DateUniqueGenerator } from '../helpers/for_date.js'
 
 export default class AuthController {
   private process: AuthRepository
@@ -113,7 +114,7 @@ export default class AuthController {
           await unlinkFile(`storage/uploads/${u.image}`)
         }
         await avatar!.move(app.makePath(path), {
-          name: `${u.nik}.jpg`,
+          name: `${u.nik}-${DateUniqueGenerator()}.jpg`,
         })
         input.image = `user-profile/${avatar!.fileName!}`
         profile = await this.process.update(userId, { avatar: input })
