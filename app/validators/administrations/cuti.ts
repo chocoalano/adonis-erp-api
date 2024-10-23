@@ -2,7 +2,6 @@ import vine from '@vinejs/vine'
 
 export const CutiValidator = vine.compile(
   vine.object({
-    userId: vine.number(),
     startDate: vine.date({
       formats: ['YYYY-MM-DD'],
     }),

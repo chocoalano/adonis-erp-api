@@ -85,7 +85,8 @@ emitter.on('user:login', async (user: User) => {
 
 // Event handler for 'pengajuan:cuti'
 emitter.on('pengajuan:cuti', async (cuti: Cuti) => {
-  const message = `User atas nama ${cuti.user.name} mengajukan cuti, periksa sekarang.`
+  const q = await User.findOrFail(cuti.userId)
+  const message = `User atas nama ${q.name} mengajukan cuti, periksa sekarang.`
   const payload = {
     id: cuti.id,
     userId: cuti.userId,
@@ -113,7 +114,8 @@ emitter.on('pengajuan:cuti', async (cuti: Cuti) => {
 
 // Event handler for 'pengajuan:shift'
 emitter.on('pengajuan:shift', async (shift: PerubahanShift) => {
-  const message = `User atas nama ${shift.user.name} mengajukan perubahan shift, periksa sekarang.`
+  const q = await User.findOrFail(shift.userId)
+  const message = `User atas nama ${q.name} mengajukan perubahan shift, periksa sekarang.`
   const payload = {
     id: shift.id,
     userId: shift.userId,
@@ -163,7 +165,8 @@ emitter.on('pengajuan:lembur', async (lemburList: WorkOvertime[]) => {
 
 // Event handler for 'pengajuan:koreksi-absen'
 emitter.on('pengajuan:koreksi-absen', async (koreksiAbsen: KoreksiAbsen) => {
-  const message = `User atas nama ${koreksiAbsen.user.name} mengajukan koreksi absen, periksa sekarang.`
+  const q = await User.findOrFail(koreksiAbsen.userId)
+  const message = `User atas nama ${q.name} mengajukan koreksi absen, periksa sekarang.`
   const payload = {
     id: koreksiAbsen.id,
     userId: koreksiAbsen.userId,

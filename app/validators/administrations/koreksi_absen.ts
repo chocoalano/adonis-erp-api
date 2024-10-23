@@ -2,7 +2,6 @@ import vine from '@vinejs/vine'
 
 export const KoreksiAbsenValidator = vine.compile(
   vine.object({
-    userId: vine.number(),
     dateAdjustment: vine.date({
       formats: ['YYYY-MM-DD'],
     }),

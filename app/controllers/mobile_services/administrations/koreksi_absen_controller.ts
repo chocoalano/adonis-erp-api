@@ -51,10 +51,14 @@ export default class KoreksiAbsenController {
   /**
    * Handle form submission for the create action
    */
-  async store({ bouncer, request, response }: HttpContext) {
+  async store({ auth, bouncer, request, response }: HttpContext) {
     await bouncer.with('KoreksiAbsenPolicy').authorize('create')
     const payload = await KoreksiAbsenValidator.validate(request.all())
-    const q = await this.process.store(payload)
+    const extendedPayload = {
+      ...payload,
+      userId: auth.user!.id
+    }
+    const q = await this.process.store(extendedPayload)
     emitter.emit('pengajuan:koreksi-absen', q)
     return response.ok(q)
   }

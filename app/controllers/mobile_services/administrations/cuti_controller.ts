@@ -53,10 +53,14 @@ export default class CutiController {
   /**
    * Handle form submission for the create action
    */
-  async store({ bouncer, request, response }: HttpContext) {
+  async store({ auth, bouncer, request, response }: HttpContext) {
     await bouncer.with('CutiPolicy').authorize('create')
     const payload = await CutiValidator.validate(request.all())
-    const q = await this.process.store(payload)
+    const extendedPayload = {
+      ...payload,
+      userId: auth.user!.id
+    }
+    const q = await this.process.store(extendedPayload)
     emitter.emit('pengajuan:cuti', q)
     return response.ok(q)
   }
