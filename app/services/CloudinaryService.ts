@@ -23,15 +23,15 @@ class CloudinaryService {
         }
     }
 
-    public static async extractPublicId(cloudinaryUrl: string) {
+    public static async extractPublicId(cloudinaryUrl: string): Promise<{ status: boolean; res: string }> {
         const urlParts = cloudinaryUrl.split('/upload/');
         if (urlParts.length < 2) {
-            throw new Error('Invalid Cloudinary URL');
+            return { status: false, res: 'Invalid Cloudinary URL' }
         }
         const pathWithVersion = urlParts[1];
         const publicIdWithExtension = pathWithVersion.split('/').slice(1).join('/'); // Skips the version part
         const publicId = publicIdWithExtension.replace(/\.[^/.]+$/, ''); // Remove the extension
-        return publicId;
+        return { status: true, res: publicId };
     }
 }
 

@@ -77,7 +77,9 @@ export default class BugController {
         if (file) {
           if (q.pictureProof !== '' || q.pictureProof !== null) {
             const publicId = await CloudinaryService.extractPublicId(q.pictureProof)
-            await CloudinaryService.delete(publicId)
+            if (publicId.status) {
+              await CloudinaryService.delete(publicId.res)
+            }
           }
           const uploadResult = await CloudinaryService.upload(file, 'laporan-bug')
           input.pictureProof = uploadResult.secure_url
@@ -101,7 +103,9 @@ export default class BugController {
     const q = await BugReport.findOrFail(request.param('id'))
     if (q) {
       const publicId = await CloudinaryService.extractPublicId(q.pictureProof)
-      await CloudinaryService.delete(publicId)
+      if (publicId.status) {
+        await CloudinaryService.delete(publicId.res)
+      }
       await q.delete()
     }
     return response.ok(q)
