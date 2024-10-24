@@ -5,7 +5,6 @@ import hash from '@adonisjs/core/services/hash'
 import vine from '@vinejs/vine'
 import Permission from '#models/MasterData/Configs/permission'
 import { AuthRepository } from '#services/repositories/auth_repository'
-import { updateProfileValidator } from '#validators/authenticated/user'
 import CloudinaryService from '#services/CloudinaryService'
 
 export default class AuthController {
@@ -80,10 +79,10 @@ export default class AuthController {
   async update({ request, auth, response }: HttpContext) {
     const userId = auth.user!.id
     const input = request.all()
-    const avatar = request.file('users.image', {
+    const avatar = request.file('user.image', {
       extnames: ['jpg', 'png', 'jpeg'],
     })
-    if (input.users && avatar) {
+    if (input.user && avatar) {
       const u = await User.findOrFail(userId)
       if ((u && u.image !== null) || (u && u.image !== '')) {
         const publicId = await CloudinaryService.extractPublicId(u.image)
@@ -92,9 +91,9 @@ export default class AuthController {
         }
       }
       const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
-      input.users.image = uploadResult.secure_url
+      input.user.image = uploadResult.secure_url
     }
-    const payload = await updateProfileValidator(userId).validate(input)
+    const payload = input
     const profile = await this.process.update(userId, payload)
     return response.send(profile)
   }
