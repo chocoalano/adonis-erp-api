@@ -5,10 +5,8 @@ import hash from '@adonisjs/core/services/hash'
 import vine from '@vinejs/vine'
 import Permission from '#models/MasterData/Configs/permission'
 import { AuthRepository } from '#services/repositories/auth_repository'
-import { unlinkFile } from '../helpers/file_uploads.js'
-import app from '@adonisjs/core/services/app'
 import { updateProfileValidator } from '#validators/authenticated/user'
-import { DateUniqueGenerator } from '../helpers/for_date.js'
+import CloudinaryService from '#services/CloudinaryService'
 
 export default class AuthController {
   private process: AuthRepository
@@ -86,15 +84,13 @@ export default class AuthController {
       extnames: ['jpg', 'png', 'jpeg'],
     })
     if (input.users && avatar) {
-      let path = 'storage/uploads/user-profile'
       const u = await User.findOrFail(userId)
       if ((u && u.image !== null) || (u && u.image !== '')) {
-        await unlinkFile(`storage/uploads/${u.image}`)
+        const publicId = await CloudinaryService.extractPublicId(u.image)
+        await CloudinaryService.delete(publicId)
       }
-      await avatar!.move(app.makePath(path), {
-        name: `${u.nik}.${avatar!.extname}`,
-      })
-      input.users.image = `user-profile/${avatar!.fileName!}`
+      const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
+      input.users.image = uploadResult.secure_url
     }
     const payload = await updateProfileValidator(userId).validate(input)
     const profile = await this.process.update(userId, payload)
@@ -108,15 +104,13 @@ export default class AuthController {
     switch (datatype) {
       case 'avatar':
         const avatar = request.file('image')
-        let path = 'storage/uploads/user-profile'
         const u = await User.findOrFail(userId)
         if ((u && u.image !== null) || (u && u.image !== '')) {
-          await unlinkFile(`storage/uploads/${u.image}`)
+          const publicId = await CloudinaryService.extractPublicId(u.image)
+          await CloudinaryService.delete(publicId)
         }
-        await avatar!.move(app.makePath(path), {
-          name: `${u.nik}-${DateUniqueGenerator()}.jpg`,
-        })
-        input.image = `user-profile/${avatar!.fileName!}`
+        const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
+        input.image = uploadResult.secure_url
         profile = await this.process.update(userId, { avatar: input })
         break
       case 'data-diri':

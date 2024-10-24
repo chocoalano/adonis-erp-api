@@ -1,5 +1,6 @@
 import Attendance from '#models/HR_Administrations/attendance'
 import ScheduleGroupAttendance from '#models/HR_Administrations/schedule_group_attendance'
+import CloudinaryService from '#services/CloudinaryService'
 import { AttendanceRepository } from '#services/repositories/administrations/attendance_repository'
 import {
   attendanceInValidator,
@@ -7,9 +8,7 @@ import {
   attendanceUpdateValidator,
   photoValidator,
 } from '#validators/administrations/attendance'
-import { cuid } from '@adonisjs/core/helpers'
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 import { DateTime } from 'luxon'
 
 interface AttendancePayload {
@@ -67,23 +66,19 @@ export default class AttendancesController {
     let payload: AttendancePayload
     let result: any
     if (input.flag === 'in') {
-      await photo.move(app.makePath('storage/uploads/attendance-in'), {
-        name: `${cuid()}.${photo.extname}`,
-      })
+      const uploadResult = await CloudinaryService.upload(photo, 'attendance-in')
       payload = (await attendanceInValidator.validate(input)) as AttendancePayload
       if (payload) {
         payload.nik = auth.user!.nik
-        payload.photo = `attendance-in/${photo.fileName}`
+        payload.photo = uploadResult.secure_url
         result = await this.process.in(payload)
       }
     } else {
-      await photo.move(app.makePath('storage/uploads/attendance-out'), {
-        name: `${cuid()}.${photo.extname}`,
-      })
+      const uploadResult = await CloudinaryService.upload(photo, 'attendance-out')
       payload = (await attendanceOutValidator.validate(input)) as AttendancePayload
       if (payload) {
         payload.nik = auth.user!.nik
-        payload.photo = `attendance-out/${photo.fileName}`
+        payload.photo = uploadResult.secure_url
         result = await this.process.out(payload)
       }
     }

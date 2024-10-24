@@ -4,6 +4,7 @@ import app from '@adonisjs/core/services/app'
 import { DateUniqueGenerator } from '../../../helpers/for_date.js'
 import { unlinkFile } from '../../../helpers/file_uploads.js'
 import emitter from '@adonisjs/core/services/emitter'
+import CloudinaryService from '#services/CloudinaryService'
 
 export default class BugController {
   /**
@@ -23,7 +24,7 @@ export default class BugController {
           .orWhere('repair_status', 'like', `%${search}%`)
           .orWhere('repair_progres', 'like', `%${search}%`)
       }
-      const q = await query.paginate(page, limit)
+      const q = await query.orderBy('id', 'desc').paginate(page, limit)
       return response.ok(q)
     } catch (error) {
       return response.abort(error.message)
@@ -38,11 +39,8 @@ export default class BugController {
       await bouncer.with('BugPolicy').authorize('create')
       const input = request.all()
       const file = request.file('pictureProof')
-      let path = 'storage/uploads/laporan-bug'
-      await file!.move(app.makePath(path), {
-        name: `${DateUniqueGenerator()}.${file!.extname}`,
-      })
-      input.pictureProof = `laporan-bug/${file!.fileName!}`
+      const uploadResult = await CloudinaryService.upload(file, 'laporan-bug')
+      input.pictureProof = uploadResult.secure_url
       input['createdBy'] = auth.user!.id
       const q = await BugReport.create(input)
       await emitter.emit('bug', q)
@@ -81,13 +79,11 @@ export default class BugController {
         input.pictureProof = q.pictureProof
         if (file) {
           if (q.pictureProof !== '' || q.pictureProof !== null) {
-            await unlinkFile(`storage/uploads/${q.pictureProof}`)
+            const publicId = await CloudinaryService.extractPublicId(q.pictureProof)
+            await CloudinaryService.delete(publicId)
           }
-          let path = 'storage/uploads/laporan-bug'
-          await file!.move(app.makePath(path), {
-            name: `${DateUniqueGenerator()}.${file!.extname}`,
-          })
-          input.pictureProof = `laporan-bug/${file!.fileName!}`
+          const uploadResult = await CloudinaryService.upload(file, 'laporan-bug')
+          input.pictureProof = uploadResult.secure_url
         }
         input['createdBy'] = auth.user!.id
         q.merge(input)
@@ -107,6 +103,8 @@ export default class BugController {
     await bouncer.with('BugPolicy').authorize('delete')
     const q = await BugReport.findOrFail(request.param('id'))
     if (q) {
+      const publicId = await CloudinaryService.extractPublicId(q.pictureProof)
+      await CloudinaryService.delete(publicId)
       await q.delete()
     }
     return response.ok(q)

@@ -1,4 +1,5 @@
 import User from '#models/user'
+import CloudinaryService from '#services/CloudinaryService'
 import { UserInterface } from '#services/interfaces/user_interfaces'
 import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { DateTime } from 'luxon'
@@ -41,37 +42,44 @@ export class UserRepository implements UserInterface {
   }
 
   async listMobile(authId: number, search: string): Promise<User[] | null> {
-    // Fetch authenticated user and preload necessary relationships
-    const auth = await User.query().preload('employe').where('id', authId).firstOrFail()
-    // Build the query for users
-    const query = User.query()
-      .preload('address')
-      .preload('employe')
-      .whereHas('employe', (builder) => {
-        builder.where('organizationId', auth.employe.organizationId)
-      })
-    // Add search criteria if provided
-    if (search) {
-      const searchTerms = [
-        'name',
-        'nik',
-        'email',
-        'phone',
-        'placebirth',
-        'gender',
-        'blood',
-        'maritalStatus',
-        'religion',
-      ]
-      query.where((q) => {
-        for (const term of searchTerms) {
-          q.orWhere(term, 'like', `%${search}%`)
-        }
-      })
+    try {
+      const auth = await User.query()
+        .preload('employe')
+        .where('id', authId)
+        .firstOrFail()
+      const query = User.query()
+        .preload('address')
+        .preload('employe')
+        .whereHas('employe', (builder) => {
+          builder.where('organizationId', auth.employe.organizationId)
+        })
+      if (search) {
+        const searchFields = [
+          'name',
+          'nik',
+          'email',
+          'phone',
+          'placebirth',
+          'gender',
+          'blood',
+          'maritalStatus',
+          'religion',
+        ]
+        query.where((q) => {
+          searchFields.forEach((field) => {
+            q.orWhere(field, 'like', `%${search}%`)
+          })
+        })
+      }
+      const users = await query.orderBy('name', 'asc')
+
+      return users
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      return null
     }
-    const user = await query.orderBy('createdAt', 'desc')
-    return user
   }
+
 
   async create(data: any): Promise<User> {
     if (data.user && data.user.datebirth) {
@@ -298,6 +306,8 @@ export class UserRepository implements UserInterface {
   async delete(userId: number): Promise<User> {
     const t = await User.findOrFail(userId)
     if (t) {
+      const publicId = await CloudinaryService.extractPublicId(t.image)
+      await CloudinaryService.delete(publicId)
       await t.delete()
     }
     return t

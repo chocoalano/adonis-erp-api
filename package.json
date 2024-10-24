@@ -58,6 +58,7 @@
     "@adonisjs/limiter": "^2.3.2",
     "@adonisjs/lucid": "^21.1.1",
     "@vinejs/vine": "^2.1.0",
+    "cloudinary": "^2.5.1",
     "luxon": "^3.5.0",
     "mysql2": "^3.11.0",
     "reflect-metadata": "^0.2.2",

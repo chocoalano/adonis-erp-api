@@ -10,6 +10,7 @@ import { createUsersValidator, updateProfileValidator } from '#validators/authen
 import type { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 import { unlinkFile } from '../../../helpers/file_uploads.js'
+import CloudinaryService from '#services/CloudinaryService'
 
 export default class UsersController {
   private process: UserRepository
@@ -80,15 +81,13 @@ export default class UsersController {
       extnames: ['jpg', 'png', 'jpeg'],
     })
     if (avatar) {
-      let path = 'storage/uploads/user-profile'
       const u = await User.findOrFail(userId)
       if ((u && u.image !== null) || (u && u.image !== '')) {
-        await unlinkFile(`storage/uploads/${u.image}`)
+        const publicId = await CloudinaryService.extractPublicId(u.image)
+        await CloudinaryService.delete(publicId)
       }
-      await avatar!.move(app.makePath(path), {
-        name: `${u.nik}.${avatar!.extname}`,
-      })
-      payload['user']['image'] = `user-profile/${avatar!.fileName!}`
+      const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
+      payload['user']['image'] = uploadResult.secure_url
     }
     const user = await this.process.update(userId, payload)
     return response.send(user)
