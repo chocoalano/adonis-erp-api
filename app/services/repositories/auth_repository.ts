@@ -15,7 +15,6 @@ import {
   profileKontakDaruratValidator,
   profileWorkExperiencesValidator,
 } from '#validators/authenticated/auth'
-import { updateProfileValidator } from '#validators/authenticated/user'
 import hash from '@adonisjs/core/services/hash'
 import { DateTime } from 'luxon'
 
