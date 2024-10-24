@@ -25,6 +25,20 @@ export const WorkOvertimeCreateValidator = vine.compile(
   })
 )
 
+export const WorkOvertimeCreateValidatorMobile = vine.compile(
+  vine.object({
+    dateOvertimeAt: vine.date({
+      formats: ['YYYY-MM-DD'],
+    }),
+    userAdm: vine.number(),
+    userLine: vine.number(),
+    userGm: vine.number(),
+    userHr: vine.number(),
+    userDirector: vine.number(),
+    userFat: vine.number(),
+  })
+)
+
 export const WorkOvertimeEditValidator = vine.compile(
   vine.object({
     datapost: vine.object({

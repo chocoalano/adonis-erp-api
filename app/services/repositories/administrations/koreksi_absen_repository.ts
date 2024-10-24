@@ -38,7 +38,7 @@ export class KoreksiAbsenRepository implements KoreksiAbsenInterface {
           })
       })
 
-    return sqlQuery.orderBy('id', 'desc').paginate(page, limit)
+    return sqlQuery.orderBy('created_at', 'desc').paginate(page, limit)
   }
 
   /**
@@ -76,7 +76,7 @@ export class KoreksiAbsenRepository implements KoreksiAbsenInterface {
             uQuery.where('name', 'like', `%${search}%`).where('nik', 'like', `%${search}%`)
           })
       })
-    return sqlQuery.orderBy('id', 'desc').paginate(page, limit)
+    return sqlQuery.orderBy('created_at', 'desc').paginate(page, limit)
   }
 
   async store(data: any): Promise<KoreksiAbsen> {

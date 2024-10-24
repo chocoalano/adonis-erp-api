@@ -142,8 +142,9 @@ emitter.on('pengajuan:shift', async (shift: PerubahanShift) => {
 emitter.on('pengajuan:lembur', async (lemburList: WorkOvertime[]) => {
   const notifications: any[] = []
 
-  lemburList.forEach((lembur) => {
-    const message = `Beberapa user mengajukan lembur, periksa sekarang.`
+  for (const lembur of lemburList) {
+    const user = await User.find(lembur.useridCreated)
+    const message = `Pengguna atas nama ${user?.name}|${user?.nik} mengajukan lembur, periksa sekarang.`
     const approvers = [
       lembur.userAdm,
       lembur.userLine,
@@ -153,13 +154,35 @@ emitter.on('pengajuan:lembur', async (lemburList: WorkOvertime[]) => {
       lembur.userFat,
     ]
 
-    approvers.forEach((approver) => {
+    // Loop through approvers and push notifications asynchronously
+    for (const approver of approvers) {
       notifications.push(
-        buildNotification(lembur.useridCreated, approver, 'pengajuan-lembur', message, lembur)
+        buildNotification(lembur.useridCreated, approver, 'pengajuan-lembur', message, {
+          useridCreated: lembur.useridCreated,
+          dateSpl: lembur.dateSpl,
+          organizationId: lembur.organizationId,
+          jobPositionId: lembur.jobPositionId,
+          overtimeDayStatus: lembur.overtimeDayStatus,
+          dateOvertimeAt: lembur.dateOvertimeAt,
+          adminApproved: lembur.adminApproved,
+          userAdm: lembur.userAdm,
+          lineApproved: lembur.lineApproved,
+          userLine: lembur.userLine,
+          gmApproved: lembur.gmApproved,
+          userGm: lembur.userGm,
+          hrgaApproved: lembur.hrgaApproved,
+          userHr: lembur.userHr,
+          directorApproved: lembur.directorApproved,
+          userDirector: lembur.userDirector,
+          fatApproved: lembur.fatApproved,
+          userFat: lembur.userFat,
+          createdAt: lembur.createdAt,
+          updatedAt: lembur.updatedAt,
+        })
       )
-    })
-  })
-
+    }
+  }
+  // Now you can await this as all notifications are processed
   await createAndEmitNotification(notifications, 'connection-lembur')
 })
 

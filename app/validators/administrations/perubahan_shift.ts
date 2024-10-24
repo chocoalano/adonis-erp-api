@@ -2,7 +2,6 @@ import vine from '@vinejs/vine'
 
 export const PerubahanShiftValidator = vine.compile(
   vine.object({
-    userId: vine.number(),
     date: vine.date({
       formats: ['YYYY-MM-DD'],
     }),

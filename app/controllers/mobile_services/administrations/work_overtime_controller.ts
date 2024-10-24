@@ -4,11 +4,12 @@ import Organization from '#models/MasterData/Configs/organization'
 import User from '#models/user'
 import { WorkOvertimeRepository } from '#services/repositories/administrations/work_overtime_repository'
 import {
-  WorkOvertimeCreateValidator,
+  WorkOvertimeCreateValidatorMobile,
   WorkOvertimeEditValidator,
 } from '#validators/administrations/work_overtime'
 import type { HttpContext } from '@adonisjs/core/http'
 import emitter from '@adonisjs/core/services/emitter'
+import { DateTime } from 'luxon'
 
 export default class WorkOvertimeController {
   private process: WorkOvertimeRepository
@@ -45,13 +46,32 @@ export default class WorkOvertimeController {
   /**
    * Handle form submission for the create action
    */
-  async store({ bouncer, request, response }: HttpContext) {
-    await bouncer.with('LemburPolicy').authorize('create')
-    const payload = await WorkOvertimeCreateValidator.validate(request.all())
-    const q = await this.process.store(payload['datapost'])
-    emitter.emit('pengajuan:lembur', q)
-    return response.ok(q)
+  async store({ auth, bouncer, request, response }: HttpContext) {
+    try {
+      await bouncer.with('LemburPolicy').authorize('create')
+      const payload = await WorkOvertimeCreateValidatorMobile.validate(request.all())
+      const user = await User.query()
+        .preload('employe')
+        .where('id', auth.user!.id)
+        .firstOrFail()
+      const extendedPayload = {
+        ...payload,
+        userIdCreated: user.id,
+        organizationId: user.employe.organizationId,
+        jobPositionId: user.employe.jobPositionId,
+        overtimeDayStatus: false,
+        dateSpl: DateTime.now()
+      }
+      const arrsave: any[] = []
+      arrsave.push(extendedPayload)
+      const q = await this.process.store(arrsave)
+      emitter.emit('pengajuan:lembur', q)
+      return response.ok(q)
+    } catch (error) {
+      return response.status(500).send({ error: 'Something went wrong', details: error.message })
+    }
   }
+  
 
   /**
    * Handle form submission for the edit action
