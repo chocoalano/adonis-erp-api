@@ -307,7 +307,9 @@ export class UserRepository implements UserInterface {
     const t = await User.findOrFail(userId)
     if (t) {
       const publicId = await CloudinaryService.extractPublicId(t.image)
-      await CloudinaryService.delete(publicId)
+      if (publicId.status) {
+        await CloudinaryService.delete(publicId.res)
+      }
       await t.delete()
     }
     return t

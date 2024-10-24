@@ -87,7 +87,9 @@ export default class AuthController {
       const u = await User.findOrFail(userId)
       if ((u && u.image !== null) || (u && u.image !== '')) {
         const publicId = await CloudinaryService.extractPublicId(u.image)
-        await CloudinaryService.delete(publicId)
+        if (publicId.status) {
+          await CloudinaryService.delete(publicId.res)
+        }
       }
       const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
       input.users.image = uploadResult.secure_url
@@ -107,7 +109,9 @@ export default class AuthController {
         const u = await User.findOrFail(userId)
         if ((u && u.image !== null) || (u && u.image !== '')) {
           const publicId = await CloudinaryService.extractPublicId(u.image)
-          await CloudinaryService.delete(publicId)
+          if (publicId.status) {
+            await CloudinaryService.delete(publicId.res)
+          }
         }
         const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
         input.image = uploadResult.secure_url
