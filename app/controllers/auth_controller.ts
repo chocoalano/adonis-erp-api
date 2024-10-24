@@ -82,7 +82,7 @@ export default class AuthController {
     const avatar = request.file('user.image', {
       extnames: ['jpg', 'png', 'jpeg'],
     })
-    if (input.user && avatar) {
+    if (avatar) {
       const u = await User.findOrFail(userId)
       if ((u && u.image !== null) || (u && u.image !== '')) {
         const publicId = await CloudinaryService.extractPublicId(u.image)
@@ -93,8 +93,7 @@ export default class AuthController {
       const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
       input.user.image = uploadResult.secure_url
     }
-    const payload = input
-    const profile = await this.process.update(userId, payload)
+    const profile = await this.process.update(userId, input)
     return response.send(profile)
   }
   async updateMobile({ request, auth, response }: HttpContext) {

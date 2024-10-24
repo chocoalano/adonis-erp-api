@@ -25,8 +25,8 @@ export class AuthRepository implements AuthInterface {
       existing.image = data.avatar.image
       await existing.save()
     }
-    if (existing && data.users) {
-      const input = await profileDataDiriValidator(userId).validate(data.users)
+    if (existing && data.user) {
+      const input = await profileDataDiriValidator(userId).validate(data.user)
       existing.name = input.name
       existing.nik = input.nik
       existing.email = input.email
@@ -40,8 +40,8 @@ export class AuthRepository implements AuthInterface {
       existing.blood = input.blood
       existing.maritalStatus = input.maritalStatus
       existing.religion = input.religion
-      if (data.users.image) {
-        existing.image = data.users.image
+      if (data.user.image) {
+        existing.image = data.user.image
       }
       await existing.save()
     }
