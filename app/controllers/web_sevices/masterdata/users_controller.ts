@@ -8,8 +8,6 @@ import User from '#models/user'
 import { UserRepository } from '#services/repositories/user_repository'
 import { createUsersValidator, updateProfileValidator } from '#validators/authenticated/user'
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
-import { unlinkFile } from '../../../helpers/file_uploads.js'
 import CloudinaryService from '#services/CloudinaryService'
 
 export default class UsersController {

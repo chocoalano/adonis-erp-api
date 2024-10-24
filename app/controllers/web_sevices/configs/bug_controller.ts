@@ -1,8 +1,5 @@
 import BugReport from '#models/MasterData/Configs/bug_report'
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
-import { DateUniqueGenerator } from '../../../helpers/for_date.js'
-import { unlinkFile } from '../../../helpers/file_uploads.js'
 import emitter from '@adonisjs/core/services/emitter'
 import CloudinaryService from '#services/CloudinaryService'
 
