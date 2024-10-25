@@ -36,6 +36,7 @@ router
     router.get('dashboard', [DashboardController, 'index'])
     router.resource('role', RoleController)
     router.resource('users', UsersController)
+    router.get('users-kelengkapan-form', [UsersController, 'kelengkapan_form'])
     router.resource('announcement', AnnouncementController)
     router.resource('attendance', AttendancesController)
     router.resource('company', CompaniesController)
