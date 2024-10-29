@@ -154,6 +154,24 @@ export class UserRepository implements UserInterface {
       }
     }
   }
+  async export(joinfrom: string, jointo: string): Promise<{ status: number, data: User[] | null }> {
+    try {
+      const u = await User.query().where((Query) => {
+        Query.whereHas('employe', (empQuery) => {
+          empQuery.where('join_date', '>', joinfrom).andWhere('join_date', '<', jointo)
+        })
+      }).preload('employe').preload('bank').preload('salary').preload('taxConfig')
+      return {
+        status: 200,
+        data: u
+      }
+    } catch (error) {
+      return {
+        status: error.status,
+        data: null
+      }
+    }
+  }
   async list(page: number, limit: number, search: string): Promise<ModelPaginatorContract<User>> {
     // Initialize the user query with necessary preloads
     const query = User.query().preload('address').preload('employe')

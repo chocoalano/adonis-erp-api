@@ -17,4 +17,5 @@ export interface UserInterface {
     users_import: any,
     payment_import: any
   ): Promise<{ status: number, message: string }>
+  export(joinfrom: string, jointo: string): Promise<{ status: number, data: User[] | null }>
 }

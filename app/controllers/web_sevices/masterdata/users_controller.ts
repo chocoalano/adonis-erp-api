@@ -128,7 +128,7 @@ export default class UsersController {
    */
   async import({ request, response }: HttpContext) {
     const input = request.all()
-    const importData = await this.process.import(
+    const process = await this.process.import(
       input.Departement,
       input.Position,
       input.level,
@@ -137,6 +137,17 @@ export default class UsersController {
       input['users_import.csv'],
       input.payment_import
     )
-    return response.status(importData.status).send(importData.message)
+    return response.status(process.status).send(process.message)
+  }
+  /**
+   * export data
+   */
+  async export({ request, response }: HttpContext) {
+    const input = request.all()
+    const process = await this.process.export(
+      input.joinfrom,
+      input.jointo,
+    )
+    return response.status(process.status).send(process.data)
   }
 }
