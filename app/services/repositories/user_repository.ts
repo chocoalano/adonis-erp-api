@@ -154,7 +154,6 @@ export class UserRepository implements UserInterface {
       }
     }
   }
-
   async list(page: number, limit: number, search: string): Promise<ModelPaginatorContract<User>> {
     // Initialize the user query with necessary preloads
     const query = User.query().preload('address').preload('employe')
@@ -190,7 +189,6 @@ export class UserRepository implements UserInterface {
     // Execute the query and return paginated results
     return query.orderBy('createdAt', 'desc').paginate(page, limit)
   }
-
   async listMobile(authId: number, search: string): Promise<User[] | null> {
     try {
       const auth = await User.query()
@@ -229,8 +227,6 @@ export class UserRepository implements UserInterface {
       return null
     }
   }
-
-
   async create(data: any): Promise<User> {
     if (data.user && data.user.datebirth) {
       data.user.datebirth = DateTime.fromISO(new Date(data.user.datebirth).toISOString())
@@ -519,7 +515,6 @@ export class UserRepository implements UserInterface {
 
     return user
   }
-
   async show(userId: number): Promise<User | null> {
     return await User.query()
       .preload('roles')
