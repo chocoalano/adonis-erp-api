@@ -2,6 +2,7 @@ import Permission from '#models/MasterData/Configs/permission'
 import UEmergencyContact from '#models/MasterData/UserRelated/u_emergency_contact'
 import UFamily from '#models/MasterData/UserRelated/u_family'
 import UFormalEducation from '#models/MasterData/UserRelated/u_formal_education'
+import UInformalEducation from '#models/MasterData/UserRelated/u_informal_education'
 import UWorkExperience from '#models/MasterData/UserRelated/u_work_experience'
 import User from '#models/user'
 import { AuthInterface } from '#services/interfaces/auth_interfaces'
@@ -65,7 +66,7 @@ export class AuthRepository implements AuthInterface {
     }
     if (existing && data.kontak_darurat) {
       const input = await profileKontakDaruratValidator.validate(data.kontak_darurat)
-      input.forEach(async (el) => {
+      for (const el of input) {
         const getId = await UEmergencyContact.query()
           .where('user_id', existing.id)
           .andWhere('name', el.name)
@@ -85,7 +86,7 @@ export class AuthRepository implements AuthInterface {
         ec.phone = el.phone
         ec.profesion = el.profession
         await ec.save();
-      })
+      }
     }
     if (existing && data.families) {
       const input = await profileFamiliesValidator.validate(data.families)
@@ -140,22 +141,29 @@ export class AuthRepository implements AuthInterface {
     }
     if (existing && data.informal_education) {
       const input = await profileEducationInformalValidator.validate(data.informal_education)
-      input.forEach(async (el) => {
-        await existing.related('informalEducation').updateOrCreate(
-          { name: el.name },
-          {
-            name: el.name,
-            start: DateTime.fromJSDate(new Date(el.start)),
-            finish: DateTime.fromJSDate(new Date(el.finish)),
-            expired: DateTime.fromJSDate(new Date(el.expired)),
-            type: el.type,
-            duration: el.duration,
-            fee: el.fee,
-            description: el.description,
-            certification: el.certification,
-          }
-        )
-      })
+      for (const el of input) {
+        const getId = await UInformalEducation.query()
+          .where('user_id', existing.id)
+          .andWhere('name', el.name)
+          .first();
+        let t;
+        if (getId) {
+          t = await existing.related('informalEducation').query().where('id', getId.id).firstOrFail();
+        } else {
+          t = new UInformalEducation();
+          t.userId = existing.id;
+        }
+        t.name = el.name
+        t.start = DateTime.fromJSDate(new Date(el.start))
+        t.finish = DateTime.fromJSDate(new Date(el.finish))
+        t.expired = DateTime.fromJSDate(new Date(el.expired))
+        t.type = el.type
+        t.duration = el.duration
+        t.fee = el.fee
+        t.description = el.description
+        t.certification = el.certification
+        await t.save();
+      }
     }
     if (existing && data.work_experiences) {
       const input = await profileWorkExperiencesValidator.validate(data.work_experiences)

@@ -123,4 +123,20 @@ export default class UsersController {
       approval,
     })
   }
+  /**
+   * import data
+   */
+  async import({ request, response }: HttpContext) {
+    const input = request.all()
+    const importData = await this.process.import(
+      input.Departement,
+      input.Position,
+      input.level,
+      input.company,
+      input.branch,
+      input['users_import.csv'],
+      input.payment_import
+    )
+    return response.status(importData.status).send(importData.message)
+  }
 }

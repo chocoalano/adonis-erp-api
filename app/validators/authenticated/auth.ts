@@ -138,7 +138,7 @@ export const profileFamiliesValidator = vine.compile(
       birthdate: vine.date({
         formats: ['YYYY-MM-DD'],
       }),
-      marital_status: vine.enum(['single', 'marriade', 'widow', 'widower']),
+      marital_status: vine.enum(['single', 'married', 'widow', 'widower']),
       job: vine.string(),
     })
   )

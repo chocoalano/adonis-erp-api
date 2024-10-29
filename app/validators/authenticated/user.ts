@@ -29,7 +29,7 @@ const user = (userId?: number) => {
     }),
     gender: vine.enum(['m', 'w']),
     blood: vine.enum(['a', 'b', 'o', 'ab']),
-    maritalStatus: vine.enum(['single', 'marriade', 'widow', 'widower']),
+    maritalStatus: vine.enum(['single', 'married', 'widow', 'widower']),
     religion: vine.enum(['islam', 'protestant', 'catholic', 'hindu', 'buddha', 'khonghucu']),
     image: vine.string().optional(),
   })
@@ -134,7 +134,6 @@ const family = vine
 const fe = vine
   .array(
     vine.object({
-      grade_id: vine.number(),
       institution: vine.string().optional().requiredIfExists('grade_id'),
       majors: vine.string().optional().requiredIfExists('institution'),
       score: vine.number().optional().requiredIfExists('majors'),
@@ -151,7 +150,7 @@ const fe = vine
         .optional()
         .requiredIfExists('start'),
       description: vine.string().optional().requiredIfExists('finish'),
-      certification: vine.boolean().optional().requiredIfExists('description'),
+      certification: vine.boolean().optional(),
     })
   )
   .optional()
@@ -181,7 +180,7 @@ const ie = vine
       duration: vine.number().optional().requiredIfExists('type'),
       fee: vine.number().optional().requiredIfExists('duration'),
       description: vine.string().optional().requiredIfExists('fee'),
-      certification: vine.boolean().optional().requiredIfExists('description'),
+      certification: vine.boolean().optional(),
     })
   )
   .optional()

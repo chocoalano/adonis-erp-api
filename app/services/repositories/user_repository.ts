@@ -1,10 +1,160 @@
+import Branch from '#models/MasterData/Configs/brance'
+import Company from '#models/MasterData/Configs/company'
+import JobLevel from '#models/MasterData/Configs/job_levels'
+import JobPosition from '#models/MasterData/Configs/job_position'
+import Organization from '#models/MasterData/Configs/organization'
+import UEmergencyContact from '#models/MasterData/UserRelated/u_emergency_contact'
+import UFamily from '#models/MasterData/UserRelated/u_family'
+import UFormalEducation from '#models/MasterData/UserRelated/u_formal_education'
+import UInformalEducation from '#models/MasterData/UserRelated/u_informal_education'
+import UWorkExperience from '#models/MasterData/UserRelated/u_work_experience'
 import User from '#models/user'
 import CloudinaryService from '#services/CloudinaryService'
 import { UserInterface } from '#services/interfaces/user_interfaces'
+import db from '@adonisjs/lucid/services/db'
 import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { DateTime } from 'luxon'
 
 export class UserRepository implements UserInterface {
+  async import(
+    Departement: any,
+    position_sync: any,
+    level: any,
+    company: any,
+    branch: any,
+    users_import: any,
+    payment_import: any
+  ): Promise<{ status: number, message: string }> {
+    const processBatch = async (data: any[], batchSize: number, processFn: (batch: any[], trx: any) => Promise<void>) => {
+      for (let i = 0; i < data.length; i += batchSize) {
+        const batch = data.slice(i, i + batchSize);
+        const trx = await db.transaction();
+        try {
+          await processFn(batch, trx);
+          await trx.commit();
+        } catch (error) {
+          await trx.rollback();
+          throw error;
+        }
+      }
+    };
+
+    const updateOrInsertEntity = async (data: any[], Model: any, uniqueField: string, trx: any) => {
+      for (const item of data) {
+        Object.assign(item, {
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        });
+        await Model.updateOrCreate(
+          { [uniqueField]: item.name },
+          { ...item },
+          { useTransaction: trx }
+        );
+      }
+    };
+
+    const updateOrInsertUsers = async (batch: any[], trx: any) => {
+      const nikList = batch.map((item: any) => item.nik);
+      const existingUsers = await User.query().whereIn('nik', nikList).useTransaction(trx);
+      const existingUsersMap = existingUsers.reduce((map, user) => {
+        map[user.nik] = user;
+        return map;
+      }, {} as Record<string, any>);
+
+      for (const item of batch) {
+
+        const user = existingUsersMap[item.nik] || new User();
+        Object.assign(user, item, {
+          datebirth: DateTime.fromISO(item.datebirth),
+          updated_at: new Date(),
+          password: user.password || item.nik
+        });
+        user.useTransaction(trx);
+        await user.save();
+
+        // Update related records
+        const relations = {
+          organizationId: await Organization.findByOrFail('name', item.organization_id),
+          jobPositionId: await JobPosition.findByOrFail('name', item.job_position_id),
+          jobLevelId: await JobLevel.findByOrFail('name', item.job_level_id),
+          approvalLine: await User.findByOrFail('name', item.approval_line),
+          approvalManager: await User.findByOrFail('name', item.approval_manager),
+          companyId: await Company.findByOrFail('name', item.company_id),
+          branchId: await Branch.findByOrFail('name', item.branch_id)
+        };
+
+        await user.related('employe').updateOrCreate({ userId: user.id }, {
+          ...relations,
+          status: item.status,
+          joinDate: DateTime.fromISO(item.joinDate),
+          signDate: DateTime.fromISO(item.signDate)
+        });
+      }
+    };
+
+    const updateOrInsertPayments = async (batch: any[], trx: any) => {
+      for (const item of batch) {
+        const user = await (await User.findByOrFail('nik', item.user_id)).useTransaction(trx);
+
+        await user.related('salary').updateOrCreate({ userId: user.id }, {
+          basicSalary: item.basicSalary,
+          salaryType: item.salaryType,
+          paymentSchedule: item.paymentSchedule,
+          prorateSettings: item.prorateSettings,
+          overtimeSettings: item.overtimeSettings,
+          costCenter: item.costCenter,
+          costCenterCategory: item.costCenterCategory,
+          currency: item.currency
+        });
+
+        await user.related('taxConfig').updateOrCreate({ userId: user.id }, {
+          npwp15DigitOld: item.npwp_15_digit_old,
+          npwp16DigitNew: item.npwp_16_digit_new,
+          ptkpStatus: item.ptkp_status,
+          taxMethod: item.tax_method,
+          taxSalary: item.tax_salary,
+          empTaxStatus: item.emp_tax_status,
+          beginningNetto: item.beginning_netto,
+          pph21_paid: item.pph_21_paid
+        });
+      }
+    };
+
+    try {
+      if (Departement?.length) {
+        await processBatch(Departement, 10, (batch, trx) => updateOrInsertEntity(batch, Organization, 'name', trx));
+      }
+      if (position_sync?.length) {
+        await processBatch(position_sync, 10, (batch, trx) => updateOrInsertEntity(batch, JobPosition, 'name', trx));
+      }
+      if (level?.length) {
+        await processBatch(level, 10, (batch, trx) => updateOrInsertEntity(batch, JobLevel, 'name', trx));
+      }
+      if (company?.length) {
+        await processBatch(company, 10, (batch, trx) => updateOrInsertEntity(batch, Company, 'name', trx));
+      }
+      if (branch?.length) {
+        await processBatch(branch, 10, (batch, trx) => updateOrInsertEntity(batch, Branch, 'name', trx));
+      }
+      if (users_import?.length) {
+        await processBatch(users_import, 10, updateOrInsertUsers);
+      }
+      if (payment_import?.length) {
+        await processBatch(payment_import, 10, updateOrInsertPayments);
+      }
+      return {
+        status: 200,
+        message: 'import success'
+      };
+    } catch (error) {
+      console.error('Error during import:', error);
+      return {
+        status: error.status,
+        message: error.message
+      }
+    }
+  }
+
   async list(page: number, limit: number, search: string): Promise<ModelPaginatorContract<User>> {
     // Initialize the user query with necessary preloads
     const query = User.query().preload('address').preload('employe')
@@ -230,37 +380,107 @@ export class UserRepository implements UserInterface {
 
     // Update or create emergency contacts
     if (data.emergency_contacts) {
-      await user.related('emergencyContact').updateOrCreateMany(data.emergency_contacts)
+      for (const el of data.emergency_contacts) {
+        const getId = await UEmergencyContact.query()
+          .where('user_id', user.id)
+          .andWhere('name', el.name)
+          .andWhere('relationship', el.relationship)
+          .andWhere('profesion', el.profession)
+          .first();
+
+        let ec;
+        if (getId) {
+          ec = await user.related('emergencyContact').query().where('id', getId.id).firstOrFail();
+        } else {
+          ec = new UEmergencyContact();
+          ec.userId = user.id;
+        }
+        ec.name = el.name
+        ec.relationship = el.relationship
+        ec.phone = el.phone
+        ec.profesion = el.profession
+        await ec.save();
+      }
     }
 
     // Convert dates and update or create related family data
     if (data.family) {
-      data.family = data.family.map((member: any) => {
-        member.birthdate = convertToDateTime(member.birthdate)
-        return member
-      })
-      await user.related('family').updateOrCreateMany(data.family)
+      for (const el of data.family) {
+        const getId = await UFamily.query()
+          .where('user_id', user.id)
+          .andWhere('birthdate', el.birthdate)
+          .andWhere('relationship', el.relationship)
+          .first()
+
+        let family
+        if (getId) {
+          family = await user.related('family').query().where('id', getId.id).firstOrFail()
+        } else {
+          family = new UFamily()
+          family.userId = user.id
+        }
+        family.fullname = el.fullname
+        family.relationship = el.relationship
+        family.birthdate = DateTime.fromJSDate(new Date(el.birthdate))
+        family.maritalStatus = el.marital_status
+        family.job = el.job
+        await family.save()
+      }
     }
 
     // Convert dates and update or create formal education data
     if (data.formal_education) {
-      data.formal_education = data.formal_education.map((member: any) => {
-        member.start = convertToDateTime(member.start)
-        member.finish = convertToDateTime(member.finish)
-        return member
-      })
-      await user.related('formalEducation').updateOrCreateMany(data.formal_education)
+      for (const el of data.formal_education) {
+        const getId = await UFormalEducation.query()
+          .where('majors', el.majors)
+          .andWhere('institution', el.institution)
+          .first();
+        let t;
+        if (getId) {
+          t = await user.related('formalEducation').query().where('id', getId.id).firstOrFail();
+        } else {
+          t = new UFormalEducation();
+          t.userId = user.id;
+        }
+        t.institution = el.institution
+        t.majors = el.majors
+        t.score = el.score
+        t.start = DateTime.fromJSDate(new Date(el.start))
+        t.finish = DateTime.fromJSDate(new Date(el.finish))
+        t.description = el.description
+        t.certification = el.certification
+        await t.save();
+      }
     }
 
     // Convert dates and update or create informal education data
     if (data.informal_education) {
-      data.informal_education = data.informal_education.map((member: any) => {
-        member.start = convertToDateTime(member.start)
-        member.finish = convertToDateTime(member.finish)
-        member.expired = convertToDateTime(member.expired)
-        return member
-      })
-      await user.related('informalEducation').updateOrCreateMany(data.informal_education)
+      for (const el of data.informal_education) {
+        const getId = await UInformalEducation.query()
+          .where('user_id', user.id)
+          .andWhere('name', el.name)
+          .first();
+
+        let t;
+        if (getId) {
+          t = await user.related('informalEducation').query().where('id', getId.id).firstOrFail();
+        } else {
+          t = new UInformalEducation();
+          t.userId = user.id;
+        }
+
+        t.name = el.name;
+        t.start = DateTime.fromJSDate(new Date(el.start));
+        t.finish = DateTime.fromJSDate(new Date(el.finish));
+        t.expired = DateTime.fromJSDate(new Date(el.expired));
+        t.type = el.type;
+        t.duration = el.duration;
+        t.fee = el.fee;
+        t.description = el.description;
+        t.certification = true;
+
+        await t.save();
+      }
     }
 
     // Update or create salary data
@@ -275,12 +495,26 @@ export class UserRepository implements UserInterface {
 
     // Convert dates and update or create work experience data
     if (data.work_experience) {
-      data.work_experience = data.work_experience.map((member: any) => {
-        member.from = convertToDateTime(member.from)
-        member.to = convertToDateTime(member.to)
-        return member
-      })
-      await user.related('workExperience').updateOrCreateMany(data.work_experience)
+      for (const el of data.work_experience) {
+        const getId = await UWorkExperience.query()
+          .where('user_id', user.id)
+          .andWhere('company', el.name)
+          .first();
+
+        let t;
+        if (getId) {
+          t = await user.related('workExperience').query().where('id', getId.id).firstOrFail();
+        } else {
+          t = new UWorkExperience();
+          t.userId = user.id;
+        }
+        t.company = el.company
+        t.position = el.position
+        t.from = DateTime.fromJSDate(new Date(el.from))
+        t.to = DateTime.fromJSDate(new Date(el.to))
+        t.lengthOfService = el.length_of_service
+        await t.save();
+      }
     }
 
     return user
