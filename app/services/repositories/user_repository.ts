@@ -45,6 +45,7 @@ export class UserRepository implements UserInterface {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         });
+        delete item.id;
         await Model.updateOrCreate(
           { [uniqueField]: item.name },
           { ...item },
@@ -54,43 +55,70 @@ export class UserRepository implements UserInterface {
     };
 
     const updateOrInsertUsers = async (batch: any[], trx: any) => {
-      const nikList = batch.map((item: any) => item.nik);
-      const existingUsers = await User.query().whereIn('nik', nikList).useTransaction(trx);
-      const existingUsersMap = existingUsers.reduce((map, user) => {
-        map[user.nik] = user;
-        return map;
-      }, {} as Record<string, any>);
-
       for (const item of batch) {
-
-        const user = existingUsersMap[item.nik] || new User();
+        // Find an existing user by email or create a new instance
+        let user = await User.query()
+          .where('nik', item.nik)
+          .first();
+    
+        if (!user) {
+          user = new User();
+        }
+        // Assign properties to user and set defaults if necessary
         Object.assign(user, item, {
-          datebirth: DateTime.fromISO(item.datebirth),
+          datebirth: item.datebirth ? DateTime.fromISO(item.datebirth) : null,
           updated_at: new Date(),
-          password: user.password || item.nik
+          password: user.password ?? `${item.nik}`,
+          gender: item.gender === 'LAKI-LAKI' ? 'm' : 'w'
         });
+    
+        // Use transaction and save user
         user.useTransaction(trx);
         await user.save();
-
-        // Update related records
+    
+        // Fetch related entities in parallel to improve efficiency
+        const [
+          organization,
+          jobPosition,
+          jobLevel,
+          approvalLineUser,
+          approvalManagerUser,
+          company,
+          branch
+        ] = await Promise.all([
+          Organization.findBy('name', item.organization_id),
+          JobPosition.findBy('name', item.job_position_id),
+          JobLevel.findBy('name', item.job_level_id),
+          User.findBy('nik', item.approval_line),
+          User.findBy('nik', item.approval_manager),
+          Company.findBy('name', item.company_id),
+          Branch.findBy('name', item.branch_id)
+        ]);
+    
+        // Define relations with ID lookups and default values
         const relations = {
-          organizationId: await Organization.findByOrFail('name', item.organization_id),
-          jobPositionId: await JobPosition.findByOrFail('name', item.job_position_id),
-          jobLevelId: await JobLevel.findByOrFail('name', item.job_level_id),
-          approvalLine: await User.findByOrFail('name', item.approval_line),
-          approvalManager: await User.findByOrFail('name', item.approval_manager),
-          companyId: await Company.findByOrFail('name', item.company_id),
-          branchId: await Branch.findByOrFail('name', item.branch_id)
+          organizationId: organization?.id,
+          jobPositionId: jobPosition?.id,
+          jobLevelId: jobLevel?.id,
+          approvalLine: approvalLineUser?.id || 1,
+          approvalManager: approvalManagerUser?.id || 1,
+          companyId: company?.id,
+          branchId: branch?.id
         };
-
-        await user.related('employe').updateOrCreate({ userId: user.id }, {
-          ...relations,
-          status: item.status,
-          joinDate: DateTime.fromISO(item.joinDate),
-          signDate: DateTime.fromISO(item.signDate)
-        });
+    
+        // Update or create related 'employe' record
+        await user.related('employe').updateOrCreate(
+          { userId: user.id },
+          {
+            ...relations,
+            status: item.status,
+            joinDate: item.joinDate ? DateTime.fromISO(item.joinDate) : DateTime.now(),
+            signDate: item.signDate ? DateTime.fromISO(item.signDate) : DateTime.now(),
+          }
+        );
       }
     };
+         
 
     const updateOrInsertPayments = async (batch: any[], trx: any) => {
       for (const item of batch) {
