@@ -52,9 +52,11 @@ export default class AuthController {
         ),
       ]
     }
+    console.log(user);
+    
     // Periksa dan perbarui password
     if (user.password !== null) {
-      user.password = input.password
+      user.password = input.nik
       await user.save()
       emitter.emit('user:login', user)
       const token = await User.accessTokens.create(user, abilities)
