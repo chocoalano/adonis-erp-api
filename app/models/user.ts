@@ -18,8 +18,8 @@ import USalary from './MasterData/UserRelated/u_salary.js'
 import UTaxConfig from './MasterData/UserRelated/u_tax_config.js'
 import Role from './MasterData/Configs/role.js'
 
-const AuthFinder = withAuthFinder(() => hash.use('bcrypt'), {
-  uids: ['nik'],
+const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
+  uids: ['email'],
   passwordColumnName: 'password',
 })
 
@@ -36,7 +36,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare email: string
 
-  @column({ serializeAs: null })
+  @column()
   declare password: string
 
   @column()
@@ -72,12 +72,12 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column.dateTime({ autoCreate: false, autoUpdate: false, serializeAs: null })
   declare deletedAt: DateTime | null
 
-  @beforeSave()
-  static async hashPassword(user: User) {
-    if (user.$dirty.password) {
-      user.password = await hash.make(user.password)
-    }
-  }
+  // @beforeSave()
+  // static async hashPassword(user: User) {
+  //   if (user.$dirty.password) {
+  //     user.password = await hash.make(user.password)
+  //   }
+  // }
 
   static accessTokens = DbAccessTokensProvider.forModel(User, {
     expiresIn: '30 days',

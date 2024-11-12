@@ -6,6 +6,7 @@ import vine from '@vinejs/vine'
 import Permission from '#models/MasterData/Configs/permission'
 import { AuthRepository } from '#services/repositories/auth_repository'
 import CloudinaryService from '#services/CloudinaryService'
+import { Hash } from '@adonisjs/core/hash'
 
 export default class AuthController {
   private process: AuthRepository
@@ -15,29 +16,27 @@ export default class AuthController {
   }
 
   async login({ request, response }: HttpContext) {
-    // Kompilasi validator
+    // Compile and validate input using Vine validator
     const validator = vine.compile(
       vine.object({
         nik: vine.string(),
         password: vine.string(),
       })
     )
-    // Validasi input
     const input = await request.validateUsing(validator)
-    // Tentukan apakah nik adalah email
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.nik)
-    // Cari user berdasarkan email atau NIK
+
+    // Retrieve user by email or NIK
     let user: User
     try {
       user = await User.findByOrFail(isEmail ? 'email' : 'nik', input.nik)
-    } catch (error) {
+    } catch {
       return response.notFound('User not found or Invalid NIK or Email')
     }
-    // Tentukan kemampuan (abilities) berdasarkan peran
     let abilities: string[]
     if (user.name === 'Superadmin') {
       const permissions = await Permission.all()
-      abilities = [...new Set(permissions.flatMap((permission) => [permission.name]))]
+      abilities = permissions.map((permission) => permission.name)
     } else {
       const account = await User.query()
         .preload('roles', (roleQuery) => {
@@ -46,30 +45,20 @@ export default class AuthController {
         .where('id', user.id)
         .firstOrFail()
 
-      abilities = [
-        ...new Set(
-          account!.roles.flatMap((role) => role.permissions.map((permission) => permission.name))
-        ),
-      ]
+      abilities = account.roles
+        .flatMap((role) => role.permissions.map((permission) => permission.name))
+        .filter((v, i, a) => a.indexOf(v) === i)
     }
-    console.log(user);
-    
-    // Periksa dan perbarui password
-    if (user.password !== null) {
-      user.password = input.nik
-      await user.save()
-      emitter.emit('user:login', user)
-      const token = await User.accessTokens.create(user, abilities)
-      return response.send(token)
+    // lama
+    // $scrypt$n=16384,r=8,p=1$6pP0+pkiQgyViSeayytlzA$pSoUiyWV3apqkhnnYnVztL3mFyo/PN09iSMGVoqMzJ5+3m1+G4HRR7U/s76KAdfUoXCansZvdBTFtC+STMtMZA
+    // baru
+    // $scrypt$n=16384,r=8,p=1$hfAF32q4iPXdZl1+F3A+wg$IML8nYsZ4atXj65lDSTe+/yw+1n6Wip6lO+PY5k8cXXIPsrq0tDccA+duCDf6u0CoiOig+MlhPfy5401D+Uy4A
+    const isPasswordValid = await hash.verify(user.password, input.password)
+    if (!isPasswordValid) {
+      return response.abort('Invalid credentials')
     }
-    if (await hash.verify(user.password, input.password)) {
-      user.password = input.password
-      await user.save()
-      emitter.emit('user:login', user)
-      const token = await User.accessTokens.create(user, abilities)
-      return response.send(token)
-    }
-    return response.unauthorized('Invalid credential!')
+    const token = await User.accessTokens.create(user, abilities)
+    return response.ok(token)
   }
 
   async user_auth({ auth, response }: HttpContext) {

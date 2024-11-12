@@ -1,19 +1,16 @@
 import { defineConfig, drivers } from '@adonisjs/core/hash'
 
 const hashConfig = defineConfig({
-  default: 'bcrypt',
+  default: 'scrypt',
 
   list: {
-    bcrypt: drivers.bcrypt({
-      rounds: 10,
-      saltSize: 16,
-      version: 98,
-    }),
     scrypt: drivers.scrypt({
       cost: 16384,
       blockSize: 8,
       parallelization: 1,
+      saltSize: 16,
       maxMemory: 33554432,
+      keyLength: 64
     }),
   },
 })

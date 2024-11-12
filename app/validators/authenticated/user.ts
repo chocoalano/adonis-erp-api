@@ -30,7 +30,7 @@ const user = (userId?: number) => {
     gender: vine.enum(['m', 'w']),
     blood: vine.enum(['a', 'b', 'o', 'ab']),
     maritalStatus: vine.enum(['single', 'married', 'widow', 'widower']),
-    religion: vine.enum(['islam', 'protestant', 'catholic', 'hindu', 'buddha', 'khonghucu']),
+    religion: vine.enum(['ISLAM','PROTESTAN','KHATOLIK','HINDU','BUDHA','KHONGHUCU']),
     image: vine.string().optional(),
   })
 }
@@ -90,7 +90,7 @@ const ec = vine
       name: vine.string(),
       relationship: vine.string().optional().requiredIfExists('name'),
       phone: vine.string().optional().requiredIfExists('relationship'),
-      profesion: vine.string().optional().requiredIfExists('phone'),
+      profession: vine.string().optional().requiredIfExists('phone'),
     })
   )
   .optional()
@@ -102,7 +102,7 @@ const employe = vine.object({
   approvalManager: vine.number(),
   companyId: vine.number(),
   branchId: vine.number(),
-  status: vine.enum(['contract', 'permanent', 'magang', 'last daily']),
+  status: vine.enum(['contract','permanent','magang','last daily','probation']),
   joinDate: vine.date({
     formats: ['YYYY-MM-DD'],
   }),
@@ -201,7 +201,7 @@ const tax = vine.object({
     .enum(['TK0', 'TK1', 'TK2', 'TK3', 'K0', 'K1', 'K2', 'K3', 'K/I/0', 'K/I/1', 'K/I/2', 'K/I/3'])
     .optional()
     .requiredIfExists('npwp16DigitNew'),
-  taxMethod: vine.enum(['gross']).optional().requiredIfExists('ptkpStatus'),
+  taxMethod: vine.enum(['gross','net','tax']).optional().requiredIfExists('ptkpStatus'),
   taxSalary: vine.enum(['taxable']).optional().requiredIfExists('taxMethod'),
   empTaxStatus: vine
     .enum(['permanent', 'contract', 'last-daily'])
@@ -227,7 +227,7 @@ const we = vine
         })
         .optional()
         .requiredIfExists('from'),
-      length_of_service: vine.string().optional().requiredIfExists('to'),
+        lengthOfService: vine.string().optional().requiredIfExists('to'),
     })
   )
   .optional()
