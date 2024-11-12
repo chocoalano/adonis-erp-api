@@ -1,12 +1,10 @@
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
-import emitter from '@adonisjs/core/services/emitter'
 import hash from '@adonisjs/core/services/hash'
 import vine from '@vinejs/vine'
 import Permission from '#models/MasterData/Configs/permission'
 import { AuthRepository } from '#services/repositories/auth_repository'
 import CloudinaryService from '#services/CloudinaryService'
-import { Hash } from '@adonisjs/core/hash'
 
 export default class AuthController {
   private process: AuthRepository
