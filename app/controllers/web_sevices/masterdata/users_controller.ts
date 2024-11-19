@@ -80,7 +80,7 @@ export default class UsersController {
     })
     if (avatar) {
       const u = await User.findOrFail(userId)
-      if ((u && u.image !== null) || (u && u.image !== '')) {
+      if (u.image) {
         const publicId = await CloudinaryService.extractPublicId(u.image)
         if (publicId.status) {
           await CloudinaryService.delete(publicId.res)

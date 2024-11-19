@@ -7,7 +7,7 @@ const BugController = () => import('#controllers/mobile_services/configs/bug_con
 const AttendancesController = () =>
   import('#controllers/mobile_services/administrations/attendances_controller')
 const AnnouncementController = () =>
-  import('#controllers/web_sevices/masterdata/announcement_controller')
+  import('#controllers/mobile_services/masterdata/announcement_controller')
 const NotificationController = () =>
   import('#controllers/mobile_services/configs/notification_controller')
 const KoreksiAbsenController = () =>

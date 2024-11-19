@@ -20,6 +20,8 @@ export default class AnnouncementController {
       const q = await query.paginate(page, limit)
       return response.ok(q)
     } catch (error) {
+      console.log(error);
+      
       return response.abort(error.message)
     }
   }

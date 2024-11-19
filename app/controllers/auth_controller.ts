@@ -47,10 +47,6 @@ export default class AuthController {
         .flatMap((role) => role.permissions.map((permission) => permission.name))
         .filter((v, i, a) => a.indexOf(v) === i)
     }
-    // lama
-    // $scrypt$n=16384,r=8,p=1$6pP0+pkiQgyViSeayytlzA$pSoUiyWV3apqkhnnYnVztL3mFyo/PN09iSMGVoqMzJ5+3m1+G4HRR7U/s76KAdfUoXCansZvdBTFtC+STMtMZA
-    // baru
-    // $scrypt$n=16384,r=8,p=1$hfAF32q4iPXdZl1+F3A+wg$IML8nYsZ4atXj65lDSTe+/yw+1n6Wip6lO+PY5k8cXXIPsrq0tDccA+duCDf6u0CoiOig+MlhPfy5401D+Uy4A
     const isPasswordValid = await hash.verify(user.password, input.password)
     if (!isPasswordValid) {
       return response.abort('Invalid credentials')
@@ -73,7 +69,7 @@ export default class AuthController {
     })
     if (avatar) {
       const u = await User.findOrFail(userId)
-      if ((u && u.image !== null) || (u && u.image !== '')) {
+      if (u.image) {
         const publicId = await CloudinaryService.extractPublicId(u.image)
         if (publicId.status) {
           await CloudinaryService.delete(publicId.res)
@@ -90,49 +86,55 @@ export default class AuthController {
     const datatype = request.param('datatype')
     const input = request.all()
     let profile
-    switch (datatype) {
-      case 'avatar':
-        const avatar = request.file('image')
-        const u = await User.findOrFail(userId)
-        if ((u && u.image !== null) || (u && u.image !== '')) {
-          const publicId = await CloudinaryService.extractPublicId(u.image)
-          if (publicId.status) {
-            await CloudinaryService.delete(publicId.res)
+    try {
+      switch (datatype) {
+        case 'avatar':
+          const avatar = request.file('image')
+          const u = await User.findOrFail(userId)
+          if (u.image) {
+            const publicId = await CloudinaryService.extractPublicId(u.image)
+            if (publicId.status) {
+              await CloudinaryService.delete(publicId.res)
+            }
           }
-        }
-        const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
-        input.image = uploadResult.secure_url
-        profile = await this.process.update(userId, { avatar: input })
-        break
-      case 'data-diri':
-        profile = await this.process.update(userId, { users: input })
-        break
-      case 'kontak_darurat':
-        profile = await this.process.update(userId, input)
-        break
-      case 'kontak_keluarga':
-        profile = await this.process.update(userId, input)
-        break
-      case 'pendidikan_formal':
-        profile = await this.process.update(userId, input)
-        break
-      case 'pendidikan_informal':
-        profile = await this.process.update(userId, input)
-        break
-      case 'pengalaman_kerja':
-        profile = await this.process.update(userId, input)
-        break
-      case 'update_bank':
-        profile = await this.process.update(userId, { bank: input })
-        break
-      case 'ubah-password':
-        profile = await this.process.update(userId, input)
-        if (profile === null) {
-          return response.notFound(profile)
-        }
-        break
+          const uploadResult = await CloudinaryService.upload(avatar, 'users-profile')
+          input.image = uploadResult.secure_url
+          profile = await this.process.update(userId, { avatar: input })
+          break
+        case 'data-diri':
+          profile = await this.process.update(userId, { users: input })
+          break
+        case 'kontak_darurat':
+          profile = await this.process.update(userId, input)
+          break
+        case 'kontak_keluarga':
+          profile = await this.process.update(userId, input)
+          break
+        case 'pendidikan_formal':
+          profile = await this.process.update(userId, input)
+          break
+        case 'pendidikan_informal':
+          profile = await this.process.update(userId, input)
+          break
+        case 'pengalaman_kerja':
+          profile = await this.process.update(userId, input)
+          break
+        case 'update_bank':
+          profile = await this.process.update(userId, { bank: input })
+          break
+        case 'ubah-password':
+          profile = await this.process.update(userId, input)
+          if (profile === null) {
+            return response.notFound(profile)
+          }
+          break
+      }
+      return response.ok(profile)
+    } catch (error) {
+      console.log(error)
+      
+      return response.abort(error)
     }
-    return response.ok(profile)
   }
 
   async remove_data({ auth, request, response }: HttpContext) {
