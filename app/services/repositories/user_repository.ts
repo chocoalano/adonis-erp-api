@@ -278,92 +278,134 @@ export class UserRepository implements UserInterface {
     }
   }
   async create(data: any): Promise<User> {
-    if (data.user && data.user.datebirth) {
-      data.user.datebirth = DateTime.fromISO(new Date(data.user.datebirth).toISOString())
-    }
+    const convertToDateTime = (date: string | null): DateTime | null => {
+      return date ? DateTime.fromISO(new Date(date).toISOString()) : null;
+    };
+    const formatDateTime = (dateTime: DateTime | null): string | null => {
+      return dateTime ? dateTime.toFormat('yyyy-MM-dd') : null;
+    };
+
+    const updateOrCreate = async (
+      relation: any, // Define the correct type if available
+      payload: Record<string, any>,
+      uniqueConstraints: Record<string, any> = {}
+    ) => {
+      return relation.updateOrCreate(uniqueConstraints, payload);
+    };
+
+    const getOrCreateRelated = async (
+      relation: any, // Define the correct type if available
+      model: any, // Model class type
+      userId: number,
+      constraints: Record<string, any>
+    ) => {
+      const existing = await relation.query().where(constraints).first();
+      if (existing) return existing;
+
+      const newInstance = new model();
+      newInstance.userId = userId;
+      Object.assign(newInstance, constraints);
+      return newInstance;
+    };
+
+    if (data.user?.datebirth) data.user.datebirth = convertToDateTime(data.user.datebirth);
     if (data.employe) {
-      if (data.employe.join_date) {
-        data.employe.join_date = DateTime.fromISO(new Date(data.employe.join_date).toISOString())
-      }
-      if (data.employe.sign_date) {
-        data.employe.sign_date = DateTime.fromISO(new Date(data.employe.sign_date).toISOString())
+      data.employe.join_date = convertToDateTime(data.employe.join_date);
+      data.employe.sign_date = convertToDateTime(data.employe.sign_date);
+    }
+    if (data.address?.idexpired) data.address.idexpired = convertToDateTime(data.address.idexpired);
+    if (data.bpjs) {
+      data.bpjs.bpjs_ketenagakerjaan_date = convertToDateTime(data.bpjs.bpjs_ketenagakerjaan_date);
+      data.bpjs.bpjs_kesehatan_date = convertToDateTime(data.bpjs.bpjs_kesehatan_date);
+      data.bpjs.jht_cost = convertToDateTime(data.bpjs.jht_cost);
+      data.bpjs.jaminan_pensiun_date = convertToDateTime(data.bpjs.jaminan_pensiun_date);
+    }
+
+    // Update main user data
+    const user = new User()
+    Object.assign(user, data.user);
+    await user.save();
+
+    // Update roles
+    if (data.user?.role) {
+      const roles = data.user.role.split(',').map(Number);
+      await user.related('roles').sync(roles);
+    }
+
+    // Related data updates
+    await updateOrCreate(user.related('employe'), data.employe);
+    await updateOrCreate(user.related('address'), data.address);
+    await updateOrCreate(user.related('bank'), data.bank);
+    await updateOrCreate(user.related('bpjs'), data.bpjs);
+    // Update emergency contacts
+    if (data.emergency_contacts) {
+      for (const contact of data.emergency_contacts) {
+        const emergencyContact = await getOrCreateRelated(user.related('emergencyContact'), UEmergencyContact, user.id, {
+          name: contact.name,
+          relationship: contact.relationship,
+          profesion: contact.profession,
+        });
+        Object.assign(emergencyContact, contact);
+        await emergencyContact.save();
       }
     }
 
-    const user = new User()
-    user.merge(data.user)
-    await user.save()
-    await user.related('employe').updateOrCreate({}, data.employe)
-    if (data.address) {
-      data.address.idexpired = DateTime.fromISO(new Date(data.address.idexpired).toISOString())
-      await user.related('address').updateOrCreate({}, data.address)
-    }
-    if (data.bank) {
-      await user.related('bank').updateOrCreate({}, data.bank)
-    }
-    if (data.bpjs) {
-      data.bpjs.bpjs_ketenagakerjaan_date = DateTime.fromISO(
-        new Date(data.bpjs.bpjs_ketenagakerjaan_date).toISOString()
-      )
-      data.bpjs.bpjs_kesehatan_date = DateTime.fromISO(
-        new Date(data.bpjs.bpjs_kesehatan_date).toISOString()
-      )
-      data.bpjs.jht_cost = DateTime.fromISO(new Date(data.bpjs.jht_cost).toISOString())
-      data.bpjs.jaminan_pensiun_date = DateTime.fromISO(
-        new Date(data.bpjs.jaminan_pensiun_date).toISOString()
-      )
-      await user.related('bpjs').updateOrCreate({}, data.bpjs)
-    }
-    if (data.emergency_contacts) {
-      await user.related('emergencyContact').updateOrCreateMany(data.emergency_contacts)
-    }
+    // Update family data
     if (data.family) {
-      data.family = data.family.map((member: any) => {
-        if (member.birthdate) {
-          member.birthdate = DateTime.fromISO(new Date(member.birthdate).toISOString())
-        }
-        return member
-      })
-      await user.related('family').updateOrCreateMany(data.family)
+      for (const member of data.family) {
+        const familyMember = await getOrCreateRelated(user.related('family'), UFamily, user.id, {
+          birthdate: formatDateTime(convertToDateTime(member.birthdate)),
+          relationship: member.relationship,
+        });
+        Object.assign(familyMember, member);
+        familyMember.birthdate = convertToDateTime(member.birthdate);
+        await familyMember.save();
+      }
     }
+
+    // Formal education
     if (data.formal_education) {
-      data.formal_education = data.formal_education.map((member: any) => {
-        if (member.start && member.finish) {
-          member.start = DateTime.fromISO(new Date(member.start).toISOString())
-          member.finish = DateTime.fromISO(new Date(member.finish).toISOString())
-        }
-        return member
-      })
-      await user.related('formalEducation').updateOrCreateMany(data.formal_education)
+      for (const edu of data.formal_education) {
+        const education = await getOrCreateRelated(user.related('formalEducation'), UFormalEducation, user.id, {
+          majors: edu.majors,
+          institution: edu.institution,
+        });
+        Object.assign(education, edu);
+        education.start = convertToDateTime(edu.start);
+        education.finish = convertToDateTime(edu.finish);
+        // console.log(education)
+        await education.save();
+      }
     }
+
+    // Informal education
     if (data.informal_education) {
-      data.informal_education = data.informal_education.map((member: any) => {
-        if (member.start && member.finish && member.expired) {
-          member.start = DateTime.fromISO(new Date(member.start).toISOString())
-          member.finish = DateTime.fromISO(new Date(member.finish).toISOString())
-          member.expired = DateTime.fromISO(new Date(member.expired).toISOString())
-        }
-        return member
-      })
-      await user.related('informalEducation').updateOrCreateMany(data.informal_education)
+      for (const edu of data.informal_education) {
+        const education = await getOrCreateRelated(user.related('informalEducation'), UInformalEducation, user.id, { name: edu.name });
+        Object.assign(education, edu);
+        education.start = convertToDateTime(edu.start);
+        education.finish = convertToDateTime(edu.finish);
+        education.expired = convertToDateTime(edu.expired);
+        await education.save();
+      }
     }
-    if (data.salary) {
-      await user.related('salary').updateOrCreate({}, data.salary)
-    }
-    if (data.tax) {
-      await user.related('taxConfig').updateOrCreate({}, data.tax)
-    }
+
+    // Salary and tax configuration
+    await updateOrCreate(user.related('salary'), data.salary);
+    await updateOrCreate(user.related('taxConfig'), data.tax);
+
+    // Work experience
     if (data.work_experience) {
-      data.work_experience = data.work_experience.map((member: any) => {
-        if (member.from && member.to) {
-          member.from = DateTime.fromISO(new Date(member.from).toISOString())
-          member.to = DateTime.fromISO(new Date(member.to).toISOString())
-        }
-        return member
-      })
-      await user.related('workExperience').updateOrCreateMany(data.work_experience)
+      for (const work of data.work_experience) {
+        const experience = await getOrCreateRelated(user.related('workExperience'), UWorkExperience, user.id, { company: work.company });
+        Object.assign(experience, work);
+        experience.from = convertToDateTime(work.from);
+        experience.to = convertToDateTime(work.to);
+        await experience.save();
+      }
     }
-    return user
+
+    return user;
   }
   async update(userId: number, data: any): Promise<User> {
     // Convert ISO string to DateTime instance
@@ -373,7 +415,7 @@ export class UserRepository implements UserInterface {
     const formatDateTime = (dateTime: DateTime | null): string | null => {
       return dateTime ? dateTime.toFormat('yyyy-MM-dd') : null;
     };
-  
+
     const updateOrCreate = async (
       relation: any, // Define the correct type if available
       payload: Record<string, any>,
@@ -381,7 +423,7 @@ export class UserRepository implements UserInterface {
     ) => {
       return relation.updateOrCreate(uniqueConstraints, payload);
     };
-  
+
     const getOrCreateRelated = async (
       relation: any, // Define the correct type if available
       model: any, // Model class type
@@ -390,13 +432,13 @@ export class UserRepository implements UserInterface {
     ) => {
       const existing = await relation.query().where(constraints).first();
       if (existing) return existing;
-  
+
       const newInstance = new model();
       newInstance.userId = userId;
       Object.assign(newInstance, constraints);
       return newInstance;
     };
-  
+
     const user = await User.findOrFail(userId);
     const {
       user: userData,
@@ -412,7 +454,7 @@ export class UserRepository implements UserInterface {
       tax,
       work_experience,
     } = data;
-  
+
     // Convert dates for user, employe, and address
     if (userData?.datebirth) userData.datebirth = convertToDateTime(userData.datebirth);
     if (employe) {
@@ -426,25 +468,25 @@ export class UserRepository implements UserInterface {
       bpjs.jht_cost = convertToDateTime(bpjs.jht_cost);
       bpjs.jaminan_pensiun_date = convertToDateTime(bpjs.jaminan_pensiun_date);
     }
-  
+
     // Update main user data
     Object.assign(user, userData);
     if (userData?.password) user.password = userData.password
     if (userData?.image) user.image = userData.image;
     await user.save();
-  
+
     // Update roles
     if (userData?.role) {
       const roles = userData.role.split(',').map(Number);
       await user.related('roles').sync(roles);
     }
-  
+
     // Related data updates
     await updateOrCreate(user.related('employe'), employe);
     await updateOrCreate(user.related('address'), address);
     await updateOrCreate(user.related('bank'), bank);
     await updateOrCreate(user.related('bpjs'), bpjs);
-  
+
     // Update emergency contacts
     if (emergency_contacts) {
       for (const contact of emergency_contacts) {
@@ -457,7 +499,7 @@ export class UserRepository implements UserInterface {
         await emergencyContact.save();
       }
     }
-  
+
     // Update family data
     if (family) {
       for (const member of family) {
@@ -470,7 +512,7 @@ export class UserRepository implements UserInterface {
         await familyMember.save();
       }
     }
-  
+
     // Formal education
     if (formal_education) {
       for (const edu of formal_education) {
@@ -485,7 +527,7 @@ export class UserRepository implements UserInterface {
         await education.save();
       }
     }
-  
+
     // Informal education
     if (informal_education) {
       for (const edu of informal_education) {
@@ -497,11 +539,11 @@ export class UserRepository implements UserInterface {
         await education.save();
       }
     }
-  
+
     // Salary and tax configuration
     await updateOrCreate(user.related('salary'), salary);
     await updateOrCreate(user.related('taxConfig'), tax);
-  
+
     // Work experience
     if (work_experience) {
       for (const work of work_experience) {
@@ -512,7 +554,7 @@ export class UserRepository implements UserInterface {
         await experience.save();
       }
     }
-  
+
     return user;
   }
 

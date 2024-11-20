@@ -66,7 +66,7 @@ export default class AttendancesController {
     let payload: AttendancePayload
     let result: any
     if (input.flag === 'in') {
-      const uploadResult = await CloudinaryService.upload(photo, 'attendance-in')
+      const uploadResult = await CloudinaryService.uploadAbsensi(photo, 'attendance-in', auth.user!.nik)
       payload = (await attendanceInValidator.validate(input)) as AttendancePayload
       if (payload) {
         payload.nik = auth.user!.nik
@@ -74,7 +74,7 @@ export default class AttendancesController {
         result = await this.process.in(payload)
       }
     } else {
-      const uploadResult = await CloudinaryService.upload(photo, 'attendance-out')
+      const uploadResult = await CloudinaryService.uploadAbsensi(photo, 'attendance-out', auth.user!.nik)
       payload = (await attendanceOutValidator.validate(input)) as AttendancePayload
       if (payload) {
         payload.nik = auth.user!.nik
