@@ -53,7 +53,13 @@ export class CutiRepository implements CutiInterface {
       .preload('user')
       .preload('line')
       .preload('hrga')
-      .where('organizationId', organizationId)
+      .where((q)=>{
+        q.whereHas('user', (us)=>{
+          us.whereHas('employe', (emp)=>{
+            emp.where('organizationId', organizationId)
+          })
+        })
+      })
       .if(search, (q) => {
         const isValidDate = DateTime.fromFormat(search, 'yyyy-MM-dd').isValid
         q.where((sql) => {

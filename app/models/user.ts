@@ -175,6 +175,18 @@ export default class User extends compose(BaseModel, AuthFinder) {
     return t ? true : false
   }
 
+  async hasPosition(user: User, positionName: string): Promise<boolean> {
+    const t = await User.query()
+      .where('id', user.id)
+      .whereHas('employe', (emp) => {
+        emp.whereHas('job', (job)=>{
+          job.where('name', positionName)
+        })
+      })
+      .first()
+    return t ? true : false
+  }
+
   async hasPermission(user: User, permissionName: string) {
     const t = await user
       .related('roles')

@@ -12,7 +12,8 @@ export interface AttendanceScheduleInterface {
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    groupId: number
   ): Promise<ModelPaginatorContract<ScheduleGroupAttendance>>
   store(
     group_attendance_id: number,

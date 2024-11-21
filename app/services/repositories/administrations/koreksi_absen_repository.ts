@@ -58,7 +58,13 @@ export class KoreksiAbsenRepository implements KoreksiAbsenInterface {
       .preload('user')
       .preload('line')
       .preload('hrd')
-      .where('organizationId', organizationId)
+      .where((q)=>{
+        q.whereHas('user', (us)=>{
+          us.whereHas('employe', (emp)=>{
+            emp.where('organizationId', organizationId)
+          })
+        })
+      })
       .if(search, (q) => {
         const isValidDate = DateTime.fromFormat(search, 'yyyy-MM-dd').isValid
         q.where((sql) => {

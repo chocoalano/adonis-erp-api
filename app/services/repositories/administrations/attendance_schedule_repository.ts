@@ -58,16 +58,21 @@ export class AttendanceScheduleRepository implements AttendanceScheduleInterface
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    groupId: number
   ): Promise<ModelPaginatorContract<ScheduleGroupAttendance>> {
     const attendanceQuery = ScheduleGroupAttendance.query()
       .preload('user')
       .preload('group_attendance')
       .preload('time')
       .whereHas('user', (us) => {
-        us.whereHas('employe', (e) => {
+        us
+        .whereHas('employe', (e) => {
           e.where('organizationId', organizationId)
         })
+      })
+      .andWhereHas('group_attendance', (ga)=>{
+        ga.where('group_attendance_id', groupId)
       })
       .if(search, (q) => {
         const isValidDate = DateTime.fromFormat(search, 'yyyy-MM-dd').isValid

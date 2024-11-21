@@ -7,6 +7,7 @@ import {
 } from '#validators/administrations/group_absens'
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
+import User from '#models/user'
 
 export default class ScheduleGroupAbsensController {
   private process: AttendanceScheduleRepository
@@ -21,11 +22,16 @@ export default class ScheduleGroupAbsensController {
     await bouncer.with('AttendancePolicy').authorize('view')
     const { page, limit, search } = request.all()
     const user = await auth.authenticate()
+    const groupUser = await GroupAttendance.query()
+    .whereHas('group_users', (gu)=>{
+      gu.where('user_id', user.id)
+    }).first()
+    const uGroup = await User.query().where('id', auth.user!.id).preload('employe').first()
     const isAdminOrDeveloper =
       (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
     const q = isAdminOrDeveloper
       ? await this.process.index(page, limit, search)
-      : await this.process.indexGroup(page, limit, search, user.employe.organizationId)
+      : await this.process.indexGroup(page, limit, search, uGroup!.employe.organizationId, groupUser!.id)
 
     const group = await GroupAttendance.all()
     const jam = await TimeAttendance.all()
