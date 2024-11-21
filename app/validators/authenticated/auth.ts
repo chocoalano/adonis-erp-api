@@ -5,7 +5,7 @@ import vine from '@vinejs/vine'
 const GENDERS = ['m', 'w'] as const
 const BLOOD_TYPES = ['a', 'b', 'o', 'ab'] as const
 const MARITAL_STATUSES = ['single', 'marriade', 'widow', 'widower'] as const
-const RELIGIONS = ['islam', 'protestant', 'catholic', 'hindu', 'buddha', 'khonghucu'] as const
+const RELIGIONS = ['ISLAM', 'PROTESTAN', 'KHATOLIK', 'HINDU', 'BUDHA', 'KHONGHUCU'] as const
 
 export const profileDataDiriValidator = (userId?: number) =>
   vine.compile(
