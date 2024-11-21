@@ -41,28 +41,26 @@ export default class GroupAbsensController {
     const input = request.all()
     if (input.groupId && input.users) {
       const payload = await GroupAbsenOnlyUsersValidator.validate(input)
-      console.log(payload);
-
-      // const group = await GroupAttendance.find(payload.groupId)
-      // if (!group) {
-      //   return response.abort('Group not found!')
-      // }
-      // const userIds = await Promise.all(
-      //   payload.users.map(async (userId) => {
-      //     const u = await User.find(userId)
-      //     return u ? u.id : null
-      //   })
-      // )
-      // const validUserIds = userIds.filter((id) => id !== null)
-      // if (validUserIds.length === 0) {
-      //   return response.abort('Users not found!')
-      // }
-      // await group.related('group_users').sync(validUserIds)
-      // return response.ok(group)
+      const group = await GroupAttendance.find(payload.groupId)
+      if (!group) {
+        return response.abort('Group not found!')
+      }
+      const userIds = await Promise.all(
+        payload.users.map(async (userId) => {
+          const u = await User.find(userId)
+          return u ? u.id : null
+        })
+      )
+      const validUserIds = userIds.filter((id) => id !== null)
+      if (validUserIds.length === 0) {
+        return response.abort('Users not found!')
+      }
+      await group.related('group_users').sync(validUserIds)
+      return response.ok(group)
     }
-    // const payload = await GroupAbsenValidator.validate(input)
-    // const groupAttendance = await GroupAttendance.updateOrCreate({ name: payload.name }, payload)
-    // return response.ok(groupAttendance)
+    const payload = await GroupAbsenValidator.validate(input)
+    const groupAttendance = await GroupAttendance.updateOrCreate({ name: payload.name }, payload)
+    return response.ok(groupAttendance)
   }
   /**
    * Delete record
