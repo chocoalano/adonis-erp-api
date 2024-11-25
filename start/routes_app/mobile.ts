@@ -20,8 +20,6 @@ const CutiController = () => import('#controllers/mobile_services/administration
 
 router
   .group(() => {
-    router.get('/test-notif', '#controllers/dashboard_controller.test_notif')
-
     // User routes
     router.get('users', [UsersController, 'index'])
 

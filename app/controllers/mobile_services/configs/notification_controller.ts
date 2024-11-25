@@ -22,50 +22,63 @@ export default class NotificationController {
   /**
    * Display a list of resource
    */
+
   async index({ auth, response, request }: HttpContext) {
-    const { page = 1, limit = 10, type } = request.all()
-    const userId = auth.user?.id
+    const { page, limit = 10, type } = request.all();
+    const userId = auth.user?.id;
+
     if (!userId) {
-      return response.unauthorized({ message: 'User not authenticated' })
+      return response.unauthorized({ message: 'User not authenticated' });
     }
-    let notifications
-    let isReadTotalNotifications
+
+    let notifications;
+    let isReadTotalNotifications = 0;
+
     if (type === 'pengajuan') {
-      const userStatusFields = [
-        { user: 'user_1', status: 'status_1' },
-        { user: 'user_2', status: 'status_2' },
-        { user: 'user_3', status: 'status_3' },
-        { user: 'user_4', status: 'status_4' },
-        { user: 'user_5', status: 'status_5' },
-        { user: 'user_6', status: 'status_6' },
-      ]
+      // Query for 'pengajuan' type notifications
       notifications = await NotificationView.query()
-        .preload('user')
         .where((query) => {
-          userStatusFields.forEach(({ user, status }) => {
-            query.orWhere((subQuery) => {
-              subQuery.where(user, userId).andWhere(status, 'w')
-            })
-          })
+          query
+            .whereIn('user_1', [userId])
+            .orWhereIn('user_2', [userId])
+            .orWhereIn('user_3', [userId])
+            .orWhereIn('user_4', [userId])
+            .orWhereIn('user_5', [userId])
+            .orWhereIn('user_6', [userId]);
+
+          query.andWhere((subQuery) => {
+            subQuery
+              .whereIn('status_1', ['w'])
+              .orWhereIn('status_2', ['w'])
+              .orWhereIn('status_3', ['w'])
+              .orWhereIn('status_4', ['w'])
+              .orWhereIn('status_5', ['w'])
+              .orWhereIn('status_6', ['w']);
+          });
         })
-        .paginate(page, limit)
-      isReadTotalNotifications = 0
+        .orderBy('id', 'desc')
+        .paginate(page, limit);
+      isReadTotalNotifications = 0;
     } else {
+      // Query for other types of notifications
       notifications = await Notification.query()
         .preload('fromUser')
         .preload('toUser')
         .where('to', userId)
         .orderBy('id', 'desc')
-        .paginate(page, limit)
-      const count = await db
-        .from('notifications')
+        .paginate(page, limit);
+
+      // Count unread notifications
+      const [{ total = 0 } = {}] = await db.from('notifications')
         .where('to', userId)
         .andWhere('isread', 'n')
-        .count('* as total')
-      isReadTotalNotifications = count[0].total
+        .count('* as total');
+
+      isReadTotalNotifications = total;
     }
-    return response.ok({ isReadTotalNotifications, notifications })
+    return response.ok({ isReadTotalNotifications, notifications });
   }
+
 
   async show({ response, request }: HttpContext) {
     const id = request.param('id')
