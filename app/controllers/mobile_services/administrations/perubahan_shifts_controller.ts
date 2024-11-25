@@ -21,11 +21,12 @@ export default class PerubahanShiftsController {
     const { page, limit, search, userIdSelected, date } = request.all()
     if (page && limit) {
       const user = await auth.authenticate()
+      const uGroup = await User.query().where('id', user.id).preload('employe').first()
       const isAdminOrDeveloper =
         (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
       const q = isAdminOrDeveloper
         ? await this.process.index(page, limit, search)
-        : await this.process.indexGroup(page, limit, search, user.employe.organizationId)
+        : await this.process.indexGroup(page, limit, search, uGroup!.employe.organizationId)
       return response.ok(q)
     } else if (userIdSelected && !date) {
       const user = await User.query().preload('employe').where('id', userIdSelected).firstOrFail()

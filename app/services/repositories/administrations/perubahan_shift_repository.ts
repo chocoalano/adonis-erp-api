@@ -61,7 +61,11 @@ export class PerubahanShiftRepository implements PerubahanShiftInterface {
       .preload('user')
       .preload('line')
       .preload('hr')
-      .where('organizationId', organizationId)
+      .whereHas('user', (uq)=>{
+        uq.whereHas('employe', (eq)=>{
+          eq.where('organization_id', organizationId)
+        })
+      })
       .if(search, (q) => {
         const isValidDate = DateTime.fromFormat(search, 'yyyy-MM-dd').isValid
         q.where((sql) => {
