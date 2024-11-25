@@ -49,3 +49,10 @@ export function getDateFormat(perday: string): string {
       return '%Y-%m-%d'
   }
 }
+
+export const convertToDateTime = (date: string | null): DateTime | null => {
+  return date ? DateTime.fromISO(new Date(date).toISOString()) : null;
+};
+export const formatDateTime = (dateTime: DateTime | null): string | null => {
+  return dateTime ? dateTime.toFormat('yyyy-MM-dd') : null;
+};

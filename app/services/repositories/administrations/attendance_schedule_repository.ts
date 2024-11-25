@@ -3,6 +3,7 @@ import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { AttendanceScheduleInterface } from '#services/interfaces/administrations/attendance_schedule_interface'
 import { DateTime } from 'luxon'
 import GroupAttendance from '#models/HR_Administrations/group_attendance'
+import { convertToDateTime } from '../../../helpers/for_date.js'
 
 export class AttendanceScheduleRepository implements AttendanceScheduleInterface {
   /**
@@ -140,11 +141,8 @@ export class AttendanceScheduleRepository implements AttendanceScheduleInterface
 
         return dates
       })
-
-      // Menyimpan jadwal ke database
       const savedSchedules = await Promise.all(
         arrJadwal.map(async (schedule) => {
-          // Cek apakah jadwal sudah ada
           const existingSchedule = await ScheduleGroupAttendance.query()
             .where('group_attendance_id', schedule.group_attendance_id)
             .andWhere('user_id', schedule.user_id)
@@ -153,16 +151,12 @@ export class AttendanceScheduleRepository implements AttendanceScheduleInterface
             .first()
 
           if (existingSchedule) {
-            // Jika sudah ada, update jadwal
             return existingSchedule.merge(schedule).save()
           } else {
-            // Jika belum ada, buat jadwal baru
             return ScheduleGroupAttendance.create(schedule)
           }
         })
       )
-
-      // Mengembalikan array jadwal yang tersimpan
       return savedSchedules
     } catch (error) {
       console.error('Error:', error)
@@ -183,6 +177,7 @@ export class AttendanceScheduleRepository implements AttendanceScheduleInterface
   async update(id: number, data: any): Promise<ScheduleGroupAttendance | null> {
     const f = await ScheduleGroupAttendance.find(id)
     if (f) {
+      data.date = convertToDateTime(data.date)
       f.merge(data)
       await f.save()
     }

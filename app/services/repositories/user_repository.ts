@@ -14,6 +14,7 @@ import { UserInterface } from '#services/interfaces/user_interfaces'
 import db from '@adonisjs/lucid/services/db'
 import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { DateTime } from 'luxon'
+import { convertToDateTime, formatDateTime } from '../../helpers/for_date.js'
 
 export class UserRepository implements UserInterface {
   async import(
@@ -278,13 +279,6 @@ export class UserRepository implements UserInterface {
     }
   }
   async create(data: any): Promise<User> {
-    const convertToDateTime = (date: string | null): DateTime | null => {
-      return date ? DateTime.fromISO(new Date(date).toISOString()) : null;
-    };
-    const formatDateTime = (dateTime: DateTime | null): string | null => {
-      return dateTime ? dateTime.toFormat('yyyy-MM-dd') : null;
-    };
-
     const updateOrCreate = async (
       relation: any, // Define the correct type if available
       payload: Record<string, any>,
@@ -408,14 +402,6 @@ export class UserRepository implements UserInterface {
     return user;
   }
   async update(userId: number, data: any): Promise<User> {
-    // Convert ISO string to DateTime instance
-    const convertToDateTime = (date: string | null): DateTime | null => {
-      return date ? DateTime.fromISO(new Date(date).toISOString()) : null;
-    };
-    const formatDateTime = (dateTime: DateTime | null): string | null => {
-      return dateTime ? dateTime.toFormat('yyyy-MM-dd') : null;
-    };
-
     const updateOrCreate = async (
       relation: any, // Define the correct type if available
       payload: Record<string, any>,
@@ -557,7 +543,6 @@ export class UserRepository implements UserInterface {
 
     return user;
   }
-
   async show(userId: number): Promise<User | null> {
     return await User.query()
       .preload('roles')
@@ -576,14 +561,19 @@ export class UserRepository implements UserInterface {
       .first()
   }
   async delete(userId: number): Promise<User> {
-    const t = await User.findOrFail(userId)
-    if (t) {
-      const publicId = await CloudinaryService.extractPublicId(t.image)
-      if (publicId.status) {
-        await CloudinaryService.delete(publicId.res)
+    const user = await User.findOrFail(userId);
+    if (user.image) {
+      try {
+        const publicId = await CloudinaryService.extractPublicId(user.image);
+        if (publicId.status) {
+          await CloudinaryService.delete(publicId.res);
+        }
+      } catch (error) {
+        console.error(`Failed to delete image for user ID ${userId}:`, error);
+        throw new Error('Failed to delete associated image.');
       }
-      await t.delete()
     }
-    return t
+    await user.delete();
+    return user;
   }
 }

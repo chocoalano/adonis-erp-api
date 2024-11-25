@@ -65,8 +65,8 @@ export default class ScheduleGroupAbsensController {
     await bouncer.with('AttendancePolicy').authorize('update')
     const payload = await ScheduleGroupAbsenEditValidator.validate(request.all())
     const id = request.param('id')
-    await this.process.update(id, payload)
-    return response.ok
+    const q = await this.process.update(id, payload)
+    return response.ok(q)
   }
 
   /**
