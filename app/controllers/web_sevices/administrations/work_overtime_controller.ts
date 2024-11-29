@@ -35,7 +35,7 @@ export default class ScheduleGroupAbsensController {
       (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
     const q = isAdminOrDeveloper
       ? await this.process.index(page, limit, search)
-      : await this.process.indexGroup(page, limit, search, user.employe.organizationId)
+      : await this.process.indexGroup(page, limit, search, user.employe.organizationId, auth.user!.id)
     const dept = await Organization.all()
     const pos = await JobPosition.all()
     const users = await User.all()

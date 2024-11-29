@@ -25,7 +25,7 @@ export default class PerubahanShiftsController {
         (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
       const q = isAdminOrDeveloper
         ? await this.process.index(page, limit, search)
-        : await this.process.indexGroup(page, limit, search, user.employe.organizationId)
+        : await this.process.indexGroup(page, limit, search, user.employe.organizationId, auth.user!.id)
       return response.ok(q)
     } else if (userIdSelected && !date) {
       const user = await User.query().preload('employe').where('id', userIdSelected).firstOrFail()
