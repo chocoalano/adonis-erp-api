@@ -7,7 +7,8 @@ export interface CutiInterface {
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    userId: number
   ): Promise<ModelPaginatorContract<Cuti>>
   store(data: any): Promise<Cuti>
   show(id: number): Promise<Cuti | null>

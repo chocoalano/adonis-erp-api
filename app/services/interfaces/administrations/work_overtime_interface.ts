@@ -8,7 +8,8 @@ export interface WorkOvertimeInterface {
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    userId: number
   ): Promise<ModelPaginatorContract<WorkOvertime>>
   store(data: any): Promise<WorkOvertime[]>
   show(id: number): Promise<WorkOvertime | null>

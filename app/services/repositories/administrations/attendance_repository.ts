@@ -52,6 +52,7 @@ export class AttendanceRepository implements AttendanceInterface {
       })
     } else {
       const { start, end } = calculateDateRange(currentMonth)
+
       attendanceQuery.where('nik', nik).andWhere((query) => {
         query.where('date', '>=', start).andWhere('date', '<=', end)
       })

@@ -52,13 +52,20 @@ export class WorkOvertimeRepository implements WorkOvertimeInterface {
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    userId: number
   ): Promise<ModelPaginatorContract<WorkOvertime>> {
     const sqlQuery = WorkOvertime.query()
       .preload('user')
       .preload('org')
       .preload('position')
       .where('organizationId', organizationId)
+      .orWhere('user_adm', userId)
+      .orWhere('user_line', userId)
+      .orWhere('user_gm', userId)
+      .orWhere('user_hr', userId)
+      .orWhere('user_director', userId)
+      .orWhere('user_fat', userId)
       .if(search, (q) => {
         const isValidDate = DateTime.fromFormat(search, 'yyyy-MM-dd').isValid
         q.where((sql) => {

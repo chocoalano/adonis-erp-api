@@ -47,7 +47,8 @@ export class CutiRepository implements CutiInterface {
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    userId: number
   ): Promise<ModelPaginatorContract<Cuti>> {
     const sqlQuery = Cuti.query()
       .preload('user')
@@ -59,6 +60,8 @@ export class CutiRepository implements CutiInterface {
             emp.where('organizationId', organizationId)
           })
         })
+        .orWhere('user_line', userId)
+        .orWhere('user_hr', userId)
       })
       .if(search, (q) => {
         const isValidDate = DateTime.fromFormat(search, 'yyyy-MM-dd').isValid

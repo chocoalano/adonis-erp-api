@@ -37,24 +37,30 @@ export default class NotificationController {
     if (type === 'pengajuan') {
       // Query for 'pengajuan' type notifications
       notifications = await NotificationView.query()
+        .preload('user')
+        .preload('cuti')
+        .preload('perubahanShift')
+        .preload('lembur')
+        .preload('koreksiAbsen')
         .where((query) => {
-          query
-            .whereIn('user_1', [userId])
-            .orWhereIn('user_2', [userId])
-            .orWhereIn('user_3', [userId])
-            .orWhereIn('user_4', [userId])
-            .orWhereIn('user_5', [userId])
-            .orWhereIn('user_6', [userId]);
-
-          query.andWhere((subQuery) => {
-            subQuery
-              .whereIn('status_1', ['w'])
-              .orWhereIn('status_2', ['w'])
-              .orWhereIn('status_3', ['w'])
-              .orWhereIn('status_4', ['w'])
-              .orWhereIn('status_5', ['w'])
-              .orWhereIn('status_6', ['w']);
-          });
+          query.where((qw1)=>{
+            qw1.where('user_1', userId).andWhere('status_1', 'w')
+          })
+          .orWhere((qw2)=>{
+            qw2.where('user_2', userId).andWhere('status_2', 'w')
+          })
+          .orWhere((qw3)=>{
+            qw3.where('user_3', userId).andWhere('status_3', 'w')
+          })
+          .orWhere((qw4)=>{
+            qw4.where('user_4', userId).andWhere('status_4', 'w')
+          })
+          .orWhere((qw5)=>{
+            qw5.where('user_5', userId).andWhere('status_5', 'w')
+          })
+          .orWhere((qw6)=>{
+            qw6.where('user_6', userId).andWhere('status_6', 'w')
+          })
         })
         .orderBy('id', 'desc')
         .paginate(page, limit);

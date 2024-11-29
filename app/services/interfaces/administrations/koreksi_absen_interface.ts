@@ -7,7 +7,8 @@ export interface KoreksiAbsenInterface {
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    userId: number
   ): Promise<ModelPaginatorContract<KoreksiAbsen>>
   store(data: any): Promise<KoreksiAbsen>
   show(id: number): Promise<KoreksiAbsen | null>

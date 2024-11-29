@@ -37,7 +37,7 @@ export default class WorkOvertimeController {
       (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
     const q = isAdminOrDeveloper
       ? await this.process.index(page, limit, search)
-      : await this.process.indexGroup(page, limit, search, uGroup!.employe.organizationId)
+      : await this.process.indexGroup(page, limit, search, uGroup!.employe.organizationId, uGroup!.id)
     const dept = await Organization.all()
     const pos = await JobPosition.all()
     const users = await User.all()

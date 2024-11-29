@@ -23,7 +23,7 @@ export default class KoreksiAbsenController {
         (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
       const q = isAdminOrDeveloper
         ? await this.process.index(page, limit, search)
-        : await this.process.indexGroup(page, limit, search, uGroup!.employe.organizationId)
+        : await this.process.indexGroup(page, limit, search, uGroup!.employe.organizationId, uGroup!.id)
       return response.ok(q)
     } else if (userIdSelected) {
       const user = await User.query()

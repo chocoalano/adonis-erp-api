@@ -11,7 +11,8 @@ export interface PerubahanShiftInterface {
     page: number,
     limit: number,
     search: string,
-    organizationId: number
+    organizationId: number,
+    userId: number
   ): Promise<ModelPaginatorContract<PerubahanShift>>
   store(data: any): Promise<PerubahanShift>
   show(id: number): Promise<PerubahanShift | null>
