@@ -1,5 +1,6 @@
 import Attendance from '#models/HR_Administrations/attendance'
 import ScheduleGroupAttendance from '#models/HR_Administrations/schedule_group_attendance'
+import User from '#models/user'
 import CloudinaryService from '#services/CloudinaryService'
 import { AttendanceRepository } from '#services/repositories/administrations/attendance_repository'
 import {
@@ -28,11 +29,46 @@ export default class AttendancesController {
   /**
    * Display a list of resource
    */
-  async index({ bouncer, request, response }: HttpContext) {
-    await bouncer.with('AttendancePolicy').authorize('view')
-    const input = request.all()
-    const q = await this.process.index(input.page, input.limit, input.search)
-    return response.ok(q)
+  async index({ auth, bouncer, request, response }: HttpContext) {
+    // Authorize user
+    await bouncer.with('AttendancePolicy').authorize('view');
+    // Extract input data with default values
+    const { page = 1, limit = 10, search } = request.all();
+    // Authenticate user
+    const user = await auth.authenticate();
+    // Check roles
+    const isAdminOrDeveloper =
+      (await user.hasRole(user, 'Administrator')) ||
+      (await user.hasRole(user, 'Developer'));
+    let queryResult;
+    // Admin or Developer specific processing
+    if (isAdminOrDeveloper) {
+      queryResult = await this.process.index(page, limit, search);
+    } else {
+      // Fetch user details with employe relation
+      const userDetail = await User.query()
+        .where('id', user.id)
+        .preload('employe')
+        .firstOrFail();
+      // Build query for attendance based on organization
+      queryResult = await Attendance.query()
+        .preload('user')
+        .whereHas('user', (userQuery) => {
+          userQuery.whereHas('employe', (employeQuery) => {
+            employeQuery.where('organization_id', userDetail.employe.organizationId);
+          });
+        })
+        .if(search, (query) => {
+          query.whereHas('user', (userSearch) => {
+            userSearch
+              .where('name', 'like', `%${search}%`)
+              .orWhere('nik', 'like', `%${search}%`);
+          });
+        })
+        .orderBy('date', 'desc')
+        .paginate(page, limit);
+    }
+    return response.ok(queryResult);
   }
 
   /**

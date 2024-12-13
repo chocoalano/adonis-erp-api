@@ -10,27 +10,37 @@ export default class GroupAbsensController {
   /**
    * Display a list of resource
    */
-  async index({ bouncer, response, request }: HttpContext) {
-    const { page, perpage, search } = request.all()
-    await bouncer.with('AttendancePolicy').authorize('view')
-    const query = GroupAttendance.query()
-      .preload('group_users') // Preload related users
-      .if(search, (q) => {
-        q.where((sql) => {
-          sql
-            .where('name', 'like', `%${search}%`)
-            .orWhere('description', 'like', `%${search}%`)
-            .orWhere('pattern_name', 'like', `%${search}%`)
-        }).orWhereHas('group_users_id', (userQuery) => {
-          userQuery.where('name', 'like', `%${search}%`)
-        })
-      })
-    const groupAttendance = await query.paginate(page, perpage)
-    const userOptions = await User.query().select('id', 'name')
+  async index({ auth, bouncer, response, request }: HttpContext) {
+    const { page = 1, perpage = 10, search } = request.all();
+    await bouncer.with('AttendancePolicy').authorize('view');
+    const user = await auth.authenticate();
+    const isAdminOrDeveloper =
+      (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
+    const query = GroupAttendance.query().preload('group_users');
+    if (!isAdminOrDeveloper) {
+      const uQuery = await User.query().where('id', user.id).preload('employe').first()
+      query.whereHas('group_users', (groupUserQuery) => {
+        groupUserQuery.whereHas('employe', (employeQuery) => {
+          employeQuery.where('organization_id', uQuery!.employe.organizationId);
+        });
+      });
+    }
+    if (search) {
+      query.where((q) => {
+        q.where('name', 'like', `%${search}%`)
+          .orWhere('description', 'like', `%${search}%`)
+          .orWhere('pattern_name', 'like', `%${search}%`);
+      });
+      query.orWhereHas('group_users', (groupUserQuery) => {
+        groupUserQuery.where('name', 'like', `%${search}%`);
+      });
+    }
+    const groupAttendance = await query.paginate(page, perpage);
+    const userOptions = await User.query().select('id', 'name');
     return response.ok({
       group: groupAttendance,
       user_option: userOptions,
-    })
+    });
   }
 
   /**

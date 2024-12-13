@@ -179,7 +179,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
     const t = await User.query()
       .where('id', user.id)
       .whereHas('employe', (emp) => {
-        emp.whereHas('job', (job)=>{
+        emp.whereHas('job', (job) => {
           job.where('name', positionName)
         })
       })
