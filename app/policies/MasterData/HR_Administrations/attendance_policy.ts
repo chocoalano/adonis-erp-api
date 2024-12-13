@@ -6,7 +6,8 @@ export default class AttendancePolicy extends BasePolicy {
     const hasPermission = await user.hasPermission(user, permission)
     const isDeveloper = await user.hasRole(user, 'Developer')
     const isAdmin = await user.hasRole(user, 'Administrator')
-    return hasPermission || isDeveloper || isAdmin
+    const isAdminProduksi = await user.hasRole(user, 'Admin-Produksi')
+    return hasPermission || isDeveloper || isAdmin || isAdminProduksi
   }
   async view(user: User) {
     return this.hasRequiredPermission(user, 'attendance-view')
