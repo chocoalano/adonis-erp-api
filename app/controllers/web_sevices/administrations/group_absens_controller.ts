@@ -10,21 +10,10 @@ export default class GroupAbsensController {
   /**
    * Display a list of resource
    */
-  async index({ auth, bouncer, response, request }: HttpContext) {
+  async index({ bouncer, response, request }: HttpContext) {
     const { page = 1, perpage = 10, search } = request.all();
     await bouncer.with('AttendancePolicy').authorize('view');
-    const user = await auth.authenticate();
-    const isAdminOrDeveloper =
-      (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
     const query = GroupAttendance.query().preload('group_users');
-    if (!isAdminOrDeveloper) {
-      const uQuery = await User.query().where('id', user.id).preload('employe').first()
-      query.whereHas('group_users', (groupUserQuery) => {
-        groupUserQuery.whereHas('employe', (employeQuery) => {
-          employeQuery.where('organization_id', uQuery!.employe.organizationId);
-        });
-      });
-    }
     if (search) {
       query.where((q) => {
         q.where('name', 'like', `%${search}%`)

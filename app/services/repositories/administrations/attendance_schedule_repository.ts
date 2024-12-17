@@ -68,11 +68,11 @@ export class AttendanceScheduleRepository implements AttendanceScheduleInterface
       .preload('time')
       .whereHas('user', (us) => {
         us
-        .whereHas('employe', (e) => {
-          e.where('organizationId', organizationId)
-        })
+          .whereHas('employe', (e) => {
+            e.where('organizationId', organizationId)
+          })
       })
-      .andWhereHas('group_attendance', (ga)=>{
+      .andWhereHas('group_attendance', (ga) => {
         ga.where('group_attendance_id', groupId)
       })
       .if(search, (q) => {

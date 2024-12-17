@@ -23,12 +23,13 @@ export default class ScheduleGroupAbsensController {
     const { page, limit, search } = request.all()
     const user = await auth.authenticate()
     const groupUser = await GroupAttendance.query()
-    .whereHas('group_users', (gu)=>{
-      gu.where('user_id', user.id)
-    }).first()
+      .whereHas('group_users', (gu) => {
+        gu.where('user_id', user.id)
+      }).first()
     const uGroup = await User.query().where('id', auth.user!.id).preload('employe').first()
     const isAdminOrDeveloper =
       (await user.hasRole(user, 'Administrator')) || (await user.hasRole(user, 'Developer'))
+
     const q = isAdminOrDeveloper
       ? await this.process.index(page, limit, search)
       : await this.process.indexGroup(page, limit, search, uGroup!.employe.organizationId, groupUser!.id)

@@ -1,5 +1,5 @@
 import Notification from '#models/notification'
-import NotificationView from '#models/notification_view'
+import NotificationView from '#models/view/notification_view'
 import { CutiRepository } from '#services/repositories/administrations/cuti_repository'
 import { KoreksiAbsenRepository } from '#services/repositories/administrations/koreksi_absen_repository'
 import { PerubahanShiftRepository } from '#services/repositories/administrations/perubahan_shift_repository'
