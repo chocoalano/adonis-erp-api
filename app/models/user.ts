@@ -17,6 +17,7 @@ import UEmploye from './MasterData/UserRelated/u_employe.js'
 import USalary from './MasterData/UserRelated/u_salary.js'
 import UTaxConfig from './MasterData/UserRelated/u_tax_config.js'
 import Role from './MasterData/Configs/role.js'
+import ScheduleGroupAttendance from './HR_Administrations/schedule_group_attendance.js'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -127,6 +128,11 @@ export default class User extends compose(BaseModel, AuthFinder) {
     foreignKey: 'userId',
   })
   declare workExperience: HasMany<typeof UWorkExperience>
+
+  @hasMany(() => ScheduleGroupAttendance, {
+    foreignKey: 'user_id',
+  })
+  declare schedule: HasMany<typeof ScheduleGroupAttendance>
 
   @hasOne(() => UEmploye, {
     onQuery: (query) => {

@@ -49,6 +49,7 @@ router
     router.resource('time', TimeConfigsController)
     router.resource('attendance-group', GroupAbsensController)
     router.resource('attendance-group-schedule', ScheduleGroupAbsensController)
+    router.get('attendance-group-schedule-forms', [ScheduleGroupAbsensController, 'formAttr'])
     router.resource('work-overtime', WorkOvertimeController)
     router.resource('cuti', CutiController)
     router.resource('perubahan-shift', PerubahanShiftsController)

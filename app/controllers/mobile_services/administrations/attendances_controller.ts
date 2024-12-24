@@ -1,6 +1,7 @@
 import Attendance from '#models/HR_Administrations/attendance'
 import ScheduleGroupAttendance from '#models/HR_Administrations/schedule_group_attendance'
 import Company from '#models/MasterData/Configs/company'
+import ViewGroupAttendanceUser from '#models/view/view_current_shift_now'
 import CloudinaryService from '#services/CloudinaryService'
 import { AttendanceRepository } from '#services/repositories/administrations/attendance_repository'
 import {
@@ -107,16 +108,7 @@ export default class AttendancesController {
    */
   async currentShift({ auth, response }: HttpContext) {
     try {
-      const currentDate = DateTime.now().setZone('Asia/Jakarta').toFormat('yyyy-MM-dd')
-      const q = await ScheduleGroupAttendance.query()
-        .preload('time')
-        .preload('group_attendance')
-        .preload('user')
-        .where('date', currentDate)
-        .whereHas('user', (uq) => {
-          uq.where('id', auth.user!.id)
-        })
-        .firstOrFail()
+      const q = await ViewGroupAttendanceUser.findByOrFail('user_id', auth.user!.id)
       return response.ok(q)
     } catch (error) {
       return response.abort(error)
