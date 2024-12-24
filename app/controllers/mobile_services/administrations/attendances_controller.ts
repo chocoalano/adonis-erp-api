@@ -1,5 +1,4 @@
 import Attendance from '#models/HR_Administrations/attendance'
-import ScheduleGroupAttendance from '#models/HR_Administrations/schedule_group_attendance'
 import Company from '#models/MasterData/Configs/company'
 import ViewGroupAttendanceUser from '#models/view/view_current_shift_now'
 import CloudinaryService from '#services/CloudinaryService'
@@ -10,7 +9,6 @@ import {
   photoValidator,
 } from '#validators/administrations/attendance'
 import type { HttpContext } from '@adonisjs/core/http'
-import { DateTime } from 'luxon'
 
 interface AttendancePayload {
   date: Date
