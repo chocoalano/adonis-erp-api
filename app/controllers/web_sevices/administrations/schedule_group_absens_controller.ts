@@ -47,7 +47,7 @@ export default class ScheduleGroupAbsensController {
     await bouncer.with('AttendancePolicy').authorize('create');
     const input = request.all();
     const arr: any[] = []
-    for (const [key, value] of Object.entries(input)) {
+    for (const [, value] of Object.entries(input)) {
       try {
         const group_user = await GroupUser.query()
           .whereHas('user', (u) => {
